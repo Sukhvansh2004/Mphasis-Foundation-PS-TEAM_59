@@ -20,7 +20,7 @@ class PathScoring:
             score += self.scoring_criteria['Arr_LT_48hrs']
         
         
-        departure_delay = (datetime.strptime(df[df["InventoryId"]==path_detailed[-1]]['DepartureDateTime'].iloc[0].strftime("%Y-%m-%d %H:%M:%S"), "%Y-%m-%d %H:%M:%S") - datetime.strptime(disrupted_flight_data['DepartureDateTime'].strftime("%Y-%m-%d %H:%M:%S"), "%Y-%m-%d %H:%M:%S")).total_seconds()/3600
+        departure_delay = (datetime.strptime(df[df["InventoryId"]==path_detailed[0]]['DepartureDateTime'].iloc[0].strftime("%Y-%m-%d %H:%M:%S"), "%Y-%m-%d %H:%M:%S") - datetime.strptime(disrupted_flight_data['DepartureDateTime'].strftime("%Y-%m-%d %H:%M:%S"), "%Y-%m-%d %H:%M:%S")).total_seconds()/3600
         if departure_delay < 6 and self.toggle['SPF_LT_6hrs']:
             score += self.scoring_criteria['SPF_LT_6hrs']
         elif departure_delay < 12 and self.toggle['SPF_LT_12hrs']:

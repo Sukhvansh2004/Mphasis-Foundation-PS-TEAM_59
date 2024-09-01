@@ -700,7 +700,7 @@ def main(*disruptions, INVENTORY_FILE="INV-ZZ-20231208_041852.csv", AIRPORT_FILE
 
             for i in range(len(df2)):
                 flight_id = df2["Flight ID"][i]  
-                PNR_ID = df1["PNR ID"][i]
+                PNR_ID = df2["PNR ID"][i]
                 inventory_id_condition = inventory_dataframe["InventoryId"] == flight_id
 
                 if flight_id == 'BC':
