@@ -1,0 +1,18 @@
+,Flight Rules,Enabled,Score
+0,Arr_LT_6hrs,True,70
+1,Arr_LT_12hrs,True,50
+2,Arr_LT_24hrs,True,40
+3,Arr_LT_48hrs,True,30
+4,Equipment,True,50
+5,Same_Citipairs,True,40
+6,DiffSame_Citipairs,True,30
+7,Different_Citipairs,True,20
+8,SPF_LT_6hrs,True,70
+9,SPF_LT_12hrs,True,50
+10,SPF_LT_24hrs,True,40
+11,SPF_LT_48hrs,True,30
+12,IsStopover,True,-20
+13,A_Grade,True,200
+14,B_Grade,True,180
+15,C_Grade,True,150
+16,D_Grade,True,150

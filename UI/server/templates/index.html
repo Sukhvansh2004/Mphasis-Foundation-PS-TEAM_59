@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mphasis | Dashboard</title>
+  <link rel="stylesheet" href="/static/css/style.css">
+  <link rel="icon" type="image/x-icon" href="/static/images/favicon.ico">
+  <!-- <link href="https://res.cloudinary.com/finnhvman/raw/upload/matter/matter-0.2.2.css" rel="stylesheet"> -->
+  <link href="https://res.cloudinary.com/finnhvman/raw/upload/matter/matter-0.2.2.min.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css" rel="stylesheet">
+  <!-- <script src="https://cdnjs.cloudflare.com/ajax/libs/slim-scroll/1.3.3/slimscroll.min.js" integrity="sha512-apfzLl6CTt6dEWKi+ffH8OGaTuw75cGdH1EoFW5zqBMCoWB8Z+lmt4eWPvidyemTAf9wwl9N6reKnhCtjJvN/A==" crossorigin="anonymous" referrerpolicy="no-referrer"></script> -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
+  <script>
+    var pnr_ranking_score = {{ pnr_ranking_score }};
+    var pnr_ranking_enabled = {{ pnr_ranking_enabled }};
+    var flight_ranking_score = {{ flight_ranking_score }};
+    var flight_ranking_enabled = {{ flight_ranking_enabled }};
+    
+    console.log(pnr_ranking_score);
+    console.log(pnr_ranking_enabled);
+    console.log(flight_ranking_score);
+    console.log(flight_ranking_enabled);
+  </script>
+</head>
+<body>
+  <div class="left-pane">
+    <div class="left-header">
+      <img src="/static/images/mphasis.svg" alt="Mphasis Logo">
+    </div>
+    <div class="user-info-box">
+      <div class="user-info">
+        <img src="/static/images/user.png" alt="User Image">
+        <div class="user-name">
+          <p>Rescheduling Agent</p>
+        </div>
+      </div>
+    </div>
+    <div class="tabs">
+      <div id="dashboard" class="tab tab-active">
+        <span>Dashboard</span>
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" version="1.2" id="home"><path d="M12 3s-6.186 5.34-9.643 8.232A1.041 1.041 0 0 0 2 12a1 1 0 0 0 1 1h2v7a1 1 0 0 0 1 1h3a1 1 0 0 0 1-1v-4h4v4a1 1 0 0 0 1 1h3a1 1 0 0 0 1-1v-7h2a1 1 0 0 0 1-1 .98.98 0 0 0-.383-.768C18.184 8.34 12 3 12 3z"></path></svg>
+      </div>
+      <div id="inputdataset" class="tab">
+        <span>Input Dataset</span>
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 32 32" id="table"><path d="M31.966 3.896C31.878 2.866 31.046 2 30 2H2C.954 2 .122 2.866.034 3.896H0V30a2 2 0 0 0 2 2h28a2 2 0 0 0 2-2V3.896h-.034zM12 14V8h8v6h-8zm8 2v6.166h-8V16h8zM10 8v6H2V8h8zm-8 8h8v6.166H2V16zm0 14v-6h8v6H2zm10 0v-6h8v6h-8zm18 0h-8v-6h8v6zm0-7.834h-8V16h8v6.166zM30 14h-8V8h8v6z"></path></svg>
+      </div>
+      <div id="rules-pnr" class="tab">
+        <span>PNR Rules</span>
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" id="settings"><path fill="none" d="M0 0h24v24H0V0z"></path><path d="M19.43 12.98c.04-.32.07-.64.07-.98s-.03-.66-.07-.98l2.11-1.65c.19-.15.24-.42.12-.64l-2-3.46c-.12-.22-.39-.3-.61-.22l-2.49 1c-.52-.4-1.08-.73-1.69-.98l-.38-2.65C14.46 2.18 14.25 2 14 2h-4c-.25 0-.46.18-.49.42l-.38 2.65c-.61.25-1.17.59-1.69.98l-2.49-1c-.23-.09-.49 0-.61.22l-2 3.46c-.13.22-.07.49.12.64l2.11 1.65c-.04.32-.07.65-.07.98s.03.66.07.98l-2.11 1.65c-.19.15-.24.42-.12.64l2 3.46c.12.22.39.3.61.22l2.49-1c.52.4 1.08.73 1.69.98l.38 2.65c.03.24.24.42.49.42h4c.25 0 .46-.18.49-.42l.38-2.65c.61-.25 1.17-.59 1.69-.98l2.49 1c.23.09.49 0 .61-.22l2-3.46c.12-.22.07-.49-.12-.64l-2.11-1.65zM12 15.5c-1.93 0-3.5-1.57-3.5-3.5s1.57-3.5 3.5-3.5 3.5 1.57 3.5 3.5-1.57 3.5-3.5 3.5z"></path></svg>
+      </div>
+      <div id="rules-flight" class="tab">
+        <span>Flight Rules</span>
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" id="settings"><path fill="none" d="M0 0h24v24H0V0z"></path><path d="M19.43 12.98c.04-.32.07-.64.07-.98s-.03-.66-.07-.98l2.11-1.65c.19-.15.24-.42.12-.64l-2-3.46c-.12-.22-.39-.3-.61-.22l-2.49 1c-.52-.4-1.08-.73-1.69-.98l-.38-2.65C14.46 2.18 14.25 2 14 2h-4c-.25 0-.46.18-.49.42l-.38 2.65c-.61.25-1.17.59-1.69.98l-2.49-1c-.23-.09-.49 0-.61.22l-2 3.46c-.13.22-.07.49.12.64l2.11 1.65c-.04.32-.07.65-.07.98s.03.66.07.98l-2.11 1.65c-.19.15-.24.42-.12.64l2 3.46c.12.22.39.3.61.22l2.49-1c.52.4 1.08.73 1.69.98l.38 2.65c.03.24.24.42.49.42h4c.25 0 .46-.18.49-.42l.38-2.65c.61-.25 1.17-.59 1.69-.98l2.49 1c.23.09.49 0 .61-.22l2-3.46c.12-.22.07-.49-.12-.64l-2.11-1.65zM12 15.5c-1.93 0-3.5-1.57-3.5-3.5s1.57-3.5 3.5-3.5 3.5 1.57 3.5 3.5-1.57 3.5-3.5 3.5z"></path></svg>
+      </div>
+      <div id="exceptions" class="tab">
+        <span>Exceptions</span>
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" enable-background="new 0 0 32 32" viewBox="0 0 32 32" id="danger"><path d="M1.04999,29.75c0.67999,1.08997,1.85999,1.75,3.15002,1.75h23.59998c1.29004,0,2.47003-0.66003,3.15002-1.75c0.66998-1.10004,0.72998-2.45001,0.15997-3.60004l-11.81-23.60999C18.66998,1.28998,17.40997,0.5,16,0.5s-2.66998,0.78998-3.29999,2.03998l-11.81,23.60999C0.32001,27.31,0.38,28.64996,1.04999,29.75z M17.5,10.45996v9.53003c0,0.83002-0.66998,1.5-1.5,1.5s-1.5-0.66998-1.5-1.5v-9.53003c0-0.82996,0.66998-1.5,1.5-1.5S17.5,9.63,17.5,10.45996z M14.5,25.45996V24.37c0-0.83002,0.66998-1.5,1.5-1.5s1.5,0.66998,1.5,1.5v1.08997c0,0.82001-0.66998,1.5-1.5,1.5S14.5,26.27997,14.5,25.45996z"></path></svg>
+      </div>
+    </div>
+    <div class="docs-btn-container">
+      <a href="#" class="matter-button-contained">
+        Read Docs
+      </a>
+    </div>
+  </div>
+
+  <div class="right-pane">
+    <div class="right-header">
+      <div class="heading">
+        <h1>Flights Rescheduling Control Panel</h1>
+      </div>
+      <div class="user-info">
+        <img src="/static/images/user.png" alt="User Image">
+      </div>
+    </div>
+    <div class="content-box">
+      <div id="dashboard-content">
+        <div class="content-header">
+          <div class="svg-box">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" version="1.2" id="home"><path d="M12 3s-6.186 5.34-9.643 8.232A1.041 1.041 0 0 0 2 12a1 1 0 0 0 1 1h2v7a1 1 0 0 0 1 1h3a1 1 0 0 0 1-1v-4h4v4a1 1 0 0 0 1 1h3a1 1 0 0 0 1-1v-7h2a1 1 0 0 0 1-1 .98.98 0 0 0-.383-.768C18.184 8.34 12 3 12 3z"></path></svg>
+          </div>
+          <h1>Dashboard</h1>
+        </div>
+        <div class="content">
+          <div class="item-container">
+            <div class="google-sheet-link-container">
+              <span class="google-sheet-link-container-span">New Flight Schedule</span>
+              <label class="matter-textfield-filled">
+                <input placeholder=" "/>
+                <span>Google Sheets Link</span>
+              </label>
+            </div>
+
+            <div class="submit-bnt-container">
+              <section>
+                <button class="ladda-button blue contract"><span class="label">Reschedule&nbsp;Flights</span> <span class="spinner"></span></button>
+              </section>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div id="inputdataset-content" hidden>
+        <div class="content-header">
+          <div class="svg-box">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 32 32" id="table"><path d="M31.966 3.896C31.878 2.866 31.046 2 30 2H2C.954 2 .122 2.866.034 3.896H0V30a2 2 0 0 0 2 2h28a2 2 0 0 0 2-2V3.896h-.034zM12 14V8h8v6h-8zm8 2v6.166h-8V16h8zM10 8v6H2V8h8zm-8 8h8v6.166H2V16zm0 14v-6h8v6H2zm10 0v-6h8v6h-8zm18 0h-8v-6h8v6zm0-7.834h-8V16h8v6.166zM30 14h-8V8h8v6z"></path></svg>
+          </div>
+          <h1>Input Dataset</h1>
+        </div>
+        <div class="content">
+          <div class="item-container">
+            <div class="google-sheet-link-container">
+              <span class="google-sheet-link-container-span">Inventory Sheet</span>
+              <label class="matter-textfield-filled">
+                <input id="dataset-sheet-url-1" placeholder=" "/>
+                <span>Google Sheets Link</span>
+              </label>
+              <span class="separator-span">— OR —</span>
+              <div id="upload-1" class="matter-button-contained upload-csv-btn">Upload CSV File</div>
+              <input id="actual-upload-1" class="actual-upload" type="file"/>
+              <span id="upload-file-info-1" class="upload-file-info"></span>
+            </div>
+            <div class="google-sheet-link-container">
+              <span class="google-sheet-link-container-span">Schedule Sheet</span>
+              <label class="matter-textfield-filled">
+                <input id="dataset-sheet-url-2" placeholder=" "/>
+                <span>Google Sheets Link</span>
+              </label>
+              <span class="separator-span">— OR —</span>
+              <div id="upload-2" class="matter-button-contained upload-csv-btn">Upload CSV File</div>
+              <input id="actual-upload-2" class="actual-upload" type="file"/>
+              <span id="upload-file-info-2" class="upload-file-info"></span>
+            </div>
+            <div class="google-sheet-link-container">
+              <span class="google-sheet-link-container-span">PNR Sheet</span>
+              <label class="matter-textfield-filled">
+                <input id="dataset-sheet-url-3" placeholder=" "/>
+                <span>Google Sheets Link</span>
+              </label>
+              <span class="separator-span">— OR —</span>
+              <div id="upload-3" class="matter-button-contained upload-csv-btn">Upload CSV File</div>
+              <input id="actual-upload-3" class="actual-upload" type="file"/>
+              <span id="upload-file-info-3" class="upload-file-info"></span>
+            </div>
+            <div class="google-sheet-link-container">
+              <span class="google-sheet-link-container-span">Passenger Sheet</span>
+              <label class="matter-textfield-filled">
+                <input id="dataset-sheet-url-4" placeholder=" "/>
+                <span>Google Sheets Link</span>
+              </label>
+              <span class="separator-span">— OR —</span>
+              <div id="upload-4" class="matter-button-contained upload-csv-btn">Upload CSV File</div>
+              <input id="actual-upload-4" class="actual-upload" type="file"/>
+              <span id="upload-file-info-4" class="upload-file-info"></span>
+            </div>
+
+            <div class="submit-bnt-container">
+              <section>
+                <button id="import-dataset-btn" class="ladda-button blue contract"><span class="label">Import&nbsp;Dataset</span> <span class="spinner"></span></button>
+              </section>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div id="rules-pnr-content" hidden>
+        <div class="content-header">
+          <div class="svg-box">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" id="settings"><path fill="none" d="M0 0h24v24H0V0z"></path><path d="M19.43 12.98c.04-.32.07-.64.07-.98s-.03-.66-.07-.98l2.11-1.65c.19-.15.24-.42.12-.64l-2-3.46c-.12-.22-.39-.3-.61-.22l-2.49 1c-.52-.4-1.08-.73-1.69-.98l-.38-2.65C14.46 2.18 14.25 2 14 2h-4c-.25 0-.46.18-.49.42l-.38 2.65c-.61.25-1.17.59-1.69.98l-2.49-1c-.23-.09-.49 0-.61.22l-2 3.46c-.13.22-.07.49.12.64l2.11 1.65c-.04.32-.07.65-.07.98s.03.66.07.98l-2.11 1.65c-.19.15-.24.42-.12.64l2 3.46c.12.22.39.3.61.22l2.49-1c.52.4 1.08.73 1.69.98l.38 2.65c.03.24.24.42.49.42h4c.25 0 .46-.18.49-.42l.38-2.65c.61-.25 1.17-.59 1.69-.98l2.49 1c.23.09.49 0 .61-.22l2-3.46c.12-.22.07-.49-.12-.64l-2.11-1.65zM12 15.5c-1.93 0-3.5-1.57-3.5-3.5s1.57-3.5 3.5-3.5 3.5 1.57 3.5 3.5-1.57 3.5-3.5 3.5z"></path></svg>
+          </div>
+          <h1>PNR Rules</h1>
+        </div>
+        <div class="content">
+          <div class="item-container">
+            <div class="rules-table-header">
+              <h2>PNR Ranking Rules</h2>
+            </div>
+            <div id="pnr-ranking-table" class="rules-table">
+              <div class="table-row row-heading">
+                <div class="table-col table-col-1">
+                  <span>#</span>
+                </div>
+                <div class="table-col table-col-2">
+                  <span>Name</span>
+                </div>
+                <div class="table-col table-col-3">
+                  <span>Condition</span>
+                </div>
+                <div class="table-col table-col-4">
+                  <span>Score Value</span>
+                </div>
+                <div class="table-col table-col-5">
+                  <span>Enabled</span>
+                </div>
+              </div>
+            </div>
+
+          </div>
+          <div class="submit-bnt-container">
+            <section>
+              <button id="import-rules-btn-PNR" class="ladda-button blue contract"><span class="label">Update&nbsp;Rules</span> <span class="spinner"></span></button>
+            </section>
+          </div>
+        </div>
+      </div>
+      <div id="rules-flight-content" hidden>
+        <div class="content-header">
+          <div class="svg-box">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" id="settings"><path fill="none" d="M0 0h24v24H0V0z"></path><path d="M19.43 12.98c.04-.32.07-.64.07-.98s-.03-.66-.07-.98l2.11-1.65c.19-.15.24-.42.12-.64l-2-3.46c-.12-.22-.39-.3-.61-.22l-2.49 1c-.52-.4-1.08-.73-1.69-.98l-.38-2.65C14.46 2.18 14.25 2 14 2h-4c-.25 0-.46.18-.49.42l-.38 2.65c-.61.25-1.17.59-1.69.98l-2.49-1c-.23-.09-.49 0-.61.22l-2 3.46c-.13.22-.07.49.12.64l2.11 1.65c-.04.32-.07.65-.07.98s.03.66.07.98l-2.11 1.65c-.19.15-.24.42-.12.64l2 3.46c.12.22.39.3.61.22l2.49-1c.52.4 1.08.73 1.69.98l.38 2.65c.03.24.24.42.49.42h4c.25 0 .46-.18.49-.42l.38-2.65c.61-.25 1.17-.59 1.69-.98l2.49 1c.23.09.49 0 .61-.22l2-3.46c.12-.22.07-.49-.12-.64l-2.11-1.65zM12 15.5c-1.93 0-3.5-1.57-3.5-3.5s1.57-3.5 3.5-3.5 3.5 1.57 3.5 3.5-1.57 3.5-3.5 3.5z"></path></svg>
+          </div>
+          <h1>Flight Rules</h1>
+        </div>
+        <div class="content">
+          <div class="item-container">
+            <div class="rules-table-header">
+              <h2>Flight Scoring Rules</h2>
+            </div>
+            <div id="flight-ranking-table" class="rules-table">
+              <div class="table-row row-heading">
+                <div class="table-col table-col-1">
+                  <span>#</span>
+                </div>
+                <div class="table-col table-col-2">
+                  <span>Name</span>
+                </div>
+                <div class="table-col table-col-3">
+                  <span>Condition</span>
+                </div>
+                <div class="table-col table-col-4">
+                  <span>Score Value</span>
+                </div>
+                <div class="table-col table-col-5">
+                  <span>Enabled</span>
+                </div>
+              </div>
+            </div>
+
+          </div>
+          <div class="submit-bnt-container">
+            <section>
+              <button id="import-rules-btn-Flight" class="ladda-button blue contract"><span class="label">Update&nbsp;Rules</span> <span class="spinner"></span></button>
+            </section>
+          </div>
+        </div>
+      </div>
+      <div id="exceptions-content" hidden>
+        <div class="content-header">
+          <div class="svg-box">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" enable-background="new 0 0 32 32" viewBox="0 0 32 32" id="danger"><path d="M1.04999,29.75c0.67999,1.08997,1.85999,1.75,3.15002,1.75h23.59998c1.29004,0,2.47003-0.66003,3.15002-1.75c0.66998-1.10004,0.72998-2.45001,0.15997-3.60004l-11.81-23.60999C18.66998,1.28998,17.40997,0.5,16,0.5s-2.66998,0.78998-3.29999,2.03998l-11.81,23.60999C0.32001,27.31,0.38,28.64996,1.04999,29.75z M17.5,10.45996v9.53003c0,0.83002-0.66998,1.5-1.5,1.5s-1.5-0.66998-1.5-1.5v-9.53003c0-0.82996,0.66998-1.5,1.5-1.5S17.5,9.63,17.5,10.45996z M14.5,25.45996V24.37c0-0.83002,0.66998-1.5,1.5-1.5s1.5,0.66998,1.5,1.5v1.08997c0,0.82001-0.66998,1.5-1.5,1.5S14.5,26.27997,14.5,25.45996z"></path></svg>
+          </div>
+          <h1>Exceptions</h1>
+        </div>
+        <div class="content">
+          <p>Exceptions Content</p>
+        </div>
+      </div>
+    </div>
+    
+  </div>
+</body>
+<script src="/static/js/script.js"></script>
+</html>

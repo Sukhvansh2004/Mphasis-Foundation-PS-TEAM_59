@@ -40,7 +40,7 @@ Data Files
     * Description: A comprehensive database of global airports, utilised as a reference in the pathfinding process.    
     * Other excel files given with the Dataset of the Problem Statement    
     * A sample output for the cancellation of flight INV-ZZ-3174758 flight using CLASSICAL_FINAL.py   
-    * Business_Rules_PNR.csv : Has an On/Off column to turn on or off the business rules accordingly with an extra advantage of dynamic scoring for each business rule 
+    * Business_Rules_PNR.csv : Has an Enabled column to turn on or off the business rules accordingly with an extra advantage of dynamic scoring for each business rule 
     * Flight_Scoring.csv : It is similar to the Business_Rules_PNR file, just this one is for making changes in flight scoring  
     
 Installation and Usage    
