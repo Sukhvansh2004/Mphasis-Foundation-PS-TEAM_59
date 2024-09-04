@@ -793,3 +793,85 @@ body {
     .ladda-button.contract-overlay[data-loading] .spinner {
         opacity: 1;
     }
+    .action-container {
+        display: flex;
+        align-items: center;
+        gap: 20px; /* Adjusts spacing between button and toggle */
+        margin-top: 20px; /* Adds some margin for spacing */
+      }
+    
+      .toggle-switch-container {
+        display: flex;
+        flex-direction: column; /* Stacks the description above the toggle */
+        align-items: center;
+        margin-right: 20px; /* Moves switch slightly to the left */
+      }
+    
+      .mode-description {
+        margin-bottom: 5px;
+        font-size: 14px;
+        font-weight: bold;
+        color: #333;
+        white-space: nowrap; /* Ensures "Mode of Solution" fits on one line */
+      }
+    
+      .switch {
+        position: relative;
+        display: inline-block;
+        width: 130px; /* Increased width for longer text */
+        height: 36px; /* Adjusted height for better appearance */
+      }
+    
+      .switch input {
+        opacity: 0;
+        width: 0;
+        height: 0;
+      }
+    
+      .slider {
+        position: absolute;
+        cursor: pointer;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: black; /* Default color for Quantum */
+        transition: 0.4s;
+        border-radius: 34px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        padding: 0 5px;
+        font-size: 14px; /* Adjust font size for options */
+        color: white;
+        border: 2px solid #080e4d;
+      }
+    
+      .slider:before {
+        position: absolute;
+        content: "";
+        height: 28px;
+        width: 28px;
+        left: 4px;
+        bottom: 4px;
+        background-color: white;
+        transition: 0.4s;
+        border-radius: 50%;
+      }
+    
+      input:checked + .slider {
+        background-color: white; /* Inverted color for Hybrid mode */
+        color: black; /* Text color for Hybrid mode */
+      }
+    
+      input:checked + .slider:before {
+        transform: translateX(92px); /* Adjusted for longer slider */
+      }
+    
+      .slider.round {
+        border-radius: 34px;
+      }
+    
+      .slider.round:before {
+        border-radius: 50%;
+      }

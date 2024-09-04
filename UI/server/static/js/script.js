@@ -347,3 +347,38 @@ Array.prototype.slice.call( buttons ).forEach( function( button ) {
     }, false );
 
 } );
+function updateToggleLabel() {
+    const toggle = document.getElementById("modeToggle");
+    const label = document.getElementById("toggleLabel");
+
+    if (toggle.checked) {
+      label.textContent = "Hybrid";
+      label.style.backgroundColor = "white"; // Inverted background color for Hybrid
+      label.style.color = "black"; // Inverted text color for Hybrid
+    } else {
+      label.textContent = "Quantum";
+      label.style.backgroundColor = "black"; // Default background color for Quantum
+      label.style.color = "white"; // Default text color for Quantum
+    }
+  }
+
+  document.getElementById('reschedule-button').addEventListener('click', function() {
+    const label = document.getElementById("toggleLabel");
+    fetch('/reschedule', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        "Mode" : label.textContent
+      })
+    })
+    .then(response => response.json())
+    .then(data => {
+      console.log('Success:', data);
+      // Handle the response data here
+    })
+    .catch((error) => {
+      console.error('Error:', error);
+    });
+  });

@@ -79,24 +79,41 @@
       <div id="dashboard-content">
         <div class="content-header">
           <div class="svg-box">
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" version="1.2" id="home"><path d="M12 3s-6.186 5.34-9.643 8.232A1.041 1.041 0 0 0 2 12a1 1 0 0 0 1 1h2v7a1 1 0 0 0 1 1h3a1 1 0 0 0 1-1v-4h4v4a1 1 0 0 0 1 1h3a1 1 0 0 0 1-1v-7h2a1 1 0 0 0 1-1 .98.98 0 0 0-.383-.768C18.184 8.34 12 3 12 3z"></path></svg>
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" version="1.2" id="home">
+              <path d="M12 3s-6.186 5.34-9.643 8.232A1.041 1.041 0 0 0 2 12a1 1 0 0 0 1 1h2v7a1 1 0 0 0 1 1h3a1 1 0 0 0 1-1v-4h4v4a1 1 0 0 0 1 1h3a1 1 0 0 0 1-1v-7h2a1 1 0 0 0 1-1 .98.98 0 0 0-.383-.768C18.184 8.34 12 3 12 3z"></path>
+            </svg>
           </div>
           <h1>Dashboard</h1>
         </div>
+      
         <div class="content">
           <div class="item-container">
             <div class="google-sheet-link-container">
               <span class="google-sheet-link-container-span">New Flight Schedule</span>
               <label class="matter-textfield-filled">
-                <input placeholder=" "/>
+                <input placeholder=" " />
                 <span>Google Sheets Link</span>
               </label>
             </div>
-
-            <div class="submit-bnt-container">
-              <section>
-                <button class="ladda-button blue contract"><span class="label">Reschedule&nbsp;Flights</span> <span class="spinner"></span></button>
-              </section>
+      
+            <div class="action-container">
+              <div class="submit-bnt-container">
+                <section>
+                  <button id="reschedule-button" class="ladda-button blue contract">
+                    <span class="label">Reschedule&nbsp;Flights</span>
+                    <span class="spinner"></span>
+                  </button>
+                </section>
+              </div>
+      
+              <!-- Toggle Switch Container with Description -->
+              <div class="toggle-switch-container">
+                <p class="mode-description">Mode of Solution</p>
+                <label class="switch">
+                  <input type="checkbox" id="modeToggle" onclick="updateToggleLabel()">
+                  <span class="slider round" id="toggleLabel">Quantum</span>
+                </label>
+              </div>
             </div>
           </div>
         </div>

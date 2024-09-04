@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request
+from flask import Flask, render_template, request, jsonify
 from config import UPLOAD_FOLDER
 import os
 import sys
@@ -91,8 +91,6 @@ def update_pnr_ranking_rules():
         return response
     
     pnr_ranking_enabled = data['pnr_ranking_enabled']
-    # convert int array back to bool array
-    pnr_ranking_enabled = [bool(v) for v in pnr_ranking_enabled]
     
     pnrRules['Score'] = pnr_ranking_score
     pnrRules['Enabled'] = pnr_ranking_enabled
@@ -123,8 +121,6 @@ def update_flight_ranking_rules():
         return response
     
     flight_ranking_enabled = data['flight_ranking_enabled']
-    # convert int array back to bool array
-    flight_ranking_enabled = [bool(v) for v in flight_ranking_enabled]
     
     flightRules['Score'] = flight_ranking_score
     flightRules['Enabled'] = flight_ranking_enabled
@@ -139,6 +135,14 @@ def update_flight_ranking_rules():
     flightRules.to_csv(os.path.join(enginePath, "Rules", "Flight_Scoring.csv"))
     return response
 
+
+@app.route('/reschedule', methods=['POST'])
+def your_endpoint():
+    # Handle the request data here
+    data = request.get_json()
+    # Process the data or perform actions as needed
+    print(data["Mode"])
+    return jsonify({"message": "Success"}), 200
 
 
 if __name__ == '__main__':
