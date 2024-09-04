@@ -866,6 +866,7 @@ body {
     
       input:checked + .slider:before {
         transform: translateX(92px); /* Adjusted for longer slider */
+        background-color: black
       }
     
       .slider.round {

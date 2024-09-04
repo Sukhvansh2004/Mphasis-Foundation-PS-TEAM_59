@@ -137,7 +137,7 @@ def update_flight_ranking_rules():
 
 
 @app.route('/reschedule', methods=['POST'])
-def your_endpoint():
+def reschedule():
     # Handle the request data here
     data = request.get_json()
     # Process the data or perform actions as needed
