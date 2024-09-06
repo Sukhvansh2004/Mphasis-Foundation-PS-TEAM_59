@@ -89,13 +89,20 @@
         <div class="content">
           <div class="item-container">
             <div class="google-sheet-link-container">
-              <span class="google-sheet-link-container-span">New Flight Schedule</span>
+              <span class="google-sheet-link-container-span">Cancelled Flights</span>
               <label class="matter-textfield-filled">
-                <input placeholder=" " />
-                <span>Google Sheets Link</span>
+                <input type="text" id="todoText" placeholder=" " />
+                <span>Flight ID</span>
               </label>
+              <!-- <input type="text" id="todoText" class="matter-textfield-filled" placeholder="Flight ID"/> -->
+              <img src="/static/images/add-sign.png" height="80em" width="80em" alt="+" id="AddUpdateClick" onclick="CreateToDoItems();" />
             </div>
-      
+            <div>
+              <h5 id="Alert"></h5>
+              <ul id="list-items" class="list-items"></ul>
+            </div>
+            
+
             <div class="action-container">
               <div class="submit-bnt-container">
                 <section>

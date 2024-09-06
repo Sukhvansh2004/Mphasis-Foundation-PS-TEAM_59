@@ -335,12 +335,75 @@ body {
 
 
 
+ul li {
+list-style: none;
+font-size: 18px;
+cursor: pointer;
+padding: 10px;
+}
+
+li {
+display: flex;
+align-items: center;
+justify-content: space-between;
+background: #edeef0;
+margin-bottom: 10px;
+border-radius: 5px;
+}
+
+h5 {
+text-align: center;
+margin-bottom: 10px;
+color: #42CDF8;
+}
 
 
+li {
+    opacity: 0;
+    animation: new-item-animation 0.3s linear forwards;
+}
 
+@keyframes new-item-animation {
+    from {
+        opacity: 0;
+        transform: translateY(-400px);
+    }
 
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
 
+li.deleted-item {
+    animation: removed-item-animation 1s cubic-bezier(0.55, -0.04, 0.91, 0.94)
+        forwards;
+    transform-origin: 0% 100%;
+}
 
+@keyframes removed-item-animation {
+    0% {
+        opacity: 1;
+        transform: rotateZ(0);
+    }
+
+    100% {
+        opacity: 0;
+        transform: translateY(600px) rotateZ(90deg);
+    }
+}
+
+.toggleMe {
+    animation: hideMe 2s forwards;
+}
+@keyframes hideMe {
+    0% {
+      opacity: 1;
+    }
+    100% {
+      opacity: 0;
+    }
+}
 
 @keyframes slideInFromLeft {
     0% {
