@@ -237,6 +237,10 @@ body {
     width: 40%;
 }
 
+.token-div{
+    width: 40%;
+}
+
 .upload-csv-btn {
     width: 15%;
 }
