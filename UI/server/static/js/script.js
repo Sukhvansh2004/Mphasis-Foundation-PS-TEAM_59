@@ -143,10 +143,10 @@ const todoAlert = document.getElementById("Alert");
 const listItems = document.getElementById("list-items");
 const addUpdate = document.getElementById("AddUpdateClick");
 
-let todo = JSON.parse(localStorage.getItem("todo-list"));
-if (!todo) {
-    todo = [];
-}
+// let todo = JSON.parse(localStorage.getItem("todo-list"));
+// if (!todo) {
+todo = [];
+// }
 
 function CreateToDoItems() {
     if (todoValue.value == "") {
@@ -399,6 +399,18 @@ $(document).ready(function () {
     });
 
     $("#reschedule-button").click(function () {
+        const outer_div=document.getElementById("outer_div")
+        outer_div.innerHTML = `
+        <div class="lds-ring">
+            <div></div>
+            <div></div>
+            <div></div>
+            <div></div>
+        </div>
+        `;
+        outer_div.style.display = "grid";
+        outer_div.style.placeItems = "center";
+        outer_div.style.backgroundColor="transparent";
         const mode = $("#toggleLabel").text();
         const token = $('#token').val();
         let flights = [];
