@@ -199,10 +199,10 @@ function ReadToDoItems() {
                 : '<img class="todo-controls" src="/static/images/check-mark.png" height="20em" width="20em" />'
             }</div><div>
     ${style === ""
-                ? '<img class="edit todo-controls" onclick="UpdateToDoItems(this)" src="/static/images/pencil-edit.png height="20em" width="20em" />'
+                ? '<img class="edit todo-controls" onclick="UpdateToDoItems(this)" src="/static/images/pencil-edit.png" height="20em" width="20em" />'
                 : ""
             }
-    <img class="delete todo-controls" onclick="DeleteToDoItems(this)" src="/static/images/bin.png height="20em" width="20em"" /></div>`;
+    <img class="delete todo-controls" onclick="DeleteToDoItems(this)" src="/static/images/bin.png" height="20em" width="20em" /></div>`;
         li.innerHTML = todoItems;
         listItems.appendChild(li);
     });
