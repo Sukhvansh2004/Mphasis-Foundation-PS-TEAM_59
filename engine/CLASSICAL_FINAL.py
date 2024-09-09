@@ -6,7 +6,14 @@ moduleDir = os.path.dirname(os.path.abspath(__file__))
 def check_time_diff(flight_network, disrupted_flights):
     current_net = flight_network[flight_network['InventoryId'].isin(disrupted_flights)].copy()
     current_net.sort_values(by="DepartureDateTime", inplace=True)
+    
+    # Convert DataFrame column to a set of IDs
+    df_ids = set(current_net['InventoryId'])
 
+    # Find IDs that are in the list but not in the DataFrame
+    invalid_ids = [id_ for id_ in disrupted_flights if id_ not in df_ids]
+    assert len(invalid_ids) == 0, f"The flight IDs {invalid_ids} are not valid."
+    
     final = []
     while True:
         if len(current_net) == 0: break

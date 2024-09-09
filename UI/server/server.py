@@ -142,19 +142,29 @@ def reschedule():
     data = request.get_json()
     # Process the data or perform actions as needed
     mode = data["Mode"]
-    if(mode == 'Quantum'):
-        quantum(*data["Flights"], TOKEN=data["Token"])
-    else:
-        hybrid(*data["Flights"], TOKEN=data["Token"])
-        
-    response = {
-        'status': 'success',
-        'title': 'Success',
-        'message': 'Flights rescheduled Successfully'
-    }
+    try:
+        if(mode == 'Quantum'):
+            quantum(*data["Flights"], TOKEN=data["Token"])
+        else:
+            hybrid(*data["Flights"], TOKEN=data["Token"])
+            
+        response = {
+            'status': 'success',
+            'title': 'Success',
+            'message': 'Flights rescheduled Successfully'
+        }
     
-    return response
+        return response
+    
+    except Exception as e:
+        
+        response = {
+            'status' : 'error',
+            'title' : 'Unable to Reschedule Flights',
+            'message' : f'{e}'
+        }
 
+        return response
 
 if __name__ == '__main__':
     app.run(debug=True)
