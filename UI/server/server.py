@@ -143,9 +143,9 @@ def reschedule():
     # Process the data or perform actions as needed
     mode = data["Mode"]
     if(mode == 'Quantum'):
-        quantum(*data["Flights"], TOKEN='DEV-12b7e5b3bee7351638023f6bf954329397740cbe')
+        quantum(*data["Flights"], TOKEN=data["Token"])
     else:
-        hybrid(*data["Flights"], TOKEN='DEV-12b7e5b3bee7351638023f6bf954329397740cbe')
+        hybrid(*data["Flights"], TOKEN=data["Token"])
         
     return jsonify({"message": "Success"}), 200
 

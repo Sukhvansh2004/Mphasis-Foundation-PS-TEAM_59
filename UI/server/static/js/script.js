@@ -398,6 +398,41 @@ $(document).ready(function () {
         xhr.send(formData);
     });
 
+    $("#reschedule-button").click(function () {
+        const mode = $("#toggleLabel").text();
+        const token = $('#token').val();
+        let flights = [];
+        
+        todo.forEach((element) => {
+            flights.push(element.item);
+        });
+        
+        let formData = {
+            "Mode": mode,
+            "Flights": flights,
+            "Token": token
+        };
+        
+        let xhr = new XMLHttpRequest();
+        xhr.open("POST", "/reschedule", true);
+        xhr.setRequestHeader('Content-Type', 'application/json');
+        xhr.onload = function () {
+            if (xhr.status == 200) {
+                let response = JSON.parse(this.responseText);
+                console.log('Success:', response);
+                let status = response["status"];
+                let title = response["title"];
+                let message = response["message"];
+                toastr[status](message, title);
+            } else {
+                console.log("Error");
+                toastr["error"]("Unable to Rechedule Flights", "Error");
+            }
+        };
+        xhr.send(JSON.stringify(formData));
+    });
+    
+
 
     $("#dashboard").click(function () {
         $("#dashboard-content").show();
@@ -517,29 +552,3 @@ function updateToggleLabel() {
         label.style.color = "white"; // Default text color for Quantum
     }
 }
-
-document.getElementById('reschedule-button').addEventListener('click', function () {
-    const mode = document.getElementById("toggleLabel");
-    let flights = []
-    todo.forEach((element) => {
-        flights.push(element.item);
-    });
-    fetch('/reschedule', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-            "Mode": mode.textContent,
-            "Flights" : flights
-        })
-    })
-        .then(response => response.json())
-        .then(data => {
-            console.log('Success:', data);
-            // Handle the response data here
-        })
-        .catch((error) => {
-            console.error('Error:', error);
-        });
-});

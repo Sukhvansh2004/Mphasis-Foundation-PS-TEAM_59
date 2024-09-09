@@ -2,7 +2,9 @@ from dimod import ConstrainedQuadraticModel, BinaryQuadraticModel, QuadraticMode
 from dwave.system import LeapHybridCQMSampler
 import numpy as np
 import pandas as pd
+import os
 
+moduleDir = os.path.dirname(os.path.abspath(__file__))
 #Defining a class Passenger for a particular PNR
 class Passenger:
     def __init__(self, PAX, ID):
@@ -251,8 +253,8 @@ def parse_solution(sampleset, passenger_flights, disrupt, abs_alpha, scores, pat
         dataframes = subframes  #Most aprropriate solution
     
     if len(dataframes) != 0: 
-        dataframes[0][0].to_csv(f"Default_solution_{disrupt}.csv")
-        dataframes[0][1].to_csv(f"Exception_list_{disrupt}.csv")
+        dataframes[0][0].to_csv(os.path.join(moduleDir, "Solutions", f"Default_solution_{disrupt}.csv"))
+        dataframes[0][1].to_csv(os.path.join(moduleDir, "Solutions", f"Exception_list_{disrupt}.csv"))
         
         print('Accomodations done, check the default and the exception files')
     else:
