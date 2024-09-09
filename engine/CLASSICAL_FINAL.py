@@ -68,8 +68,8 @@ def main(*disruptions_all, INVENTORY_FILE=os.path.join(moduleDir, "Files", "inv.
             sampleset =  reaccomodation(PNR, paths, scores, alpha, sources[disrupt], destinations[disrupt], impacted_pax[disrupt], disrupt, TOKEN)
         
             if sampleset is not None and sampleset.first.energy<0:
-                df1 = pd.read_csv(f"Default_solution_{disrupt}.csv")
-                df2 = pd.read_csv(f"Exception_list_{disrupt}.csv")
+                df1 = pd.read_csv(os.path.join(moduleDir, "Solutions", f"Default_solution_{disrupt}.csv"))
+                df2 = pd.read_csv(os.path.join(moduleDir, "Solutions", f"Exception_list_{disrupt}.csv"))
 
                 for i in range(len(df1)):
                     flight_id = df1["Flight ID"][i]

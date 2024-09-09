@@ -426,7 +426,7 @@ $(document).ready(function () {
                 toastr[status](message, title);
             } else {
                 console.log("Error");
-                toastr["error"]("Unable to Rechedule Flights", "Error");
+                toastr["error"]("Unable to Reschedule Flights", "Error");
             }
         };
         xhr.send(JSON.stringify(formData));

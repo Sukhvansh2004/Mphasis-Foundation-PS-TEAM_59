@@ -147,7 +147,13 @@ def reschedule():
     else:
         hybrid(*data["Flights"], TOKEN=data["Token"])
         
-    return jsonify({"message": "Success"}), 200
+    response = {
+        'status': 'success',
+        'title': 'Success',
+        'message': 'Flights rescheduled Successfully'
+    }
+    
+    return response
 
 
 if __name__ == '__main__':
