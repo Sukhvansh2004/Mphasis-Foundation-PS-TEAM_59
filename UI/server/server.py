@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, jsonify
+from flask import Flask, render_template, request
 from config import UPLOAD_FOLDER
 import os
 import sys

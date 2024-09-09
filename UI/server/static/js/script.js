@@ -399,18 +399,6 @@ $(document).ready(function () {
     });
 
     $("#reschedule-button").click(function () {
-        const outer_div=document.getElementById("outer_div")
-        outer_div.innerHTML = `
-        <div class="lds-ring">
-            <div></div>
-            <div></div>
-            <div></div>
-            <div></div>
-        </div>
-        `;
-        outer_div.style.display = "grid";
-        outer_div.style.placeItems = "center";
-        outer_div.style.backgroundColor="transparent";
         const mode = $("#toggleLabel").text();
         const token = $('#token').val();
         let flights = [];
@@ -424,7 +412,8 @@ $(document).ready(function () {
             "Flights": flights,
             "Token": token
         };
-        
+        const outer_div=document.getElementById("outer_div");
+        const reschedulePage = outer_div.innerHTML;
         let xhr = new XMLHttpRequest();
         xhr.open("POST", "/reschedule", true);
         xhr.setRequestHeader('Content-Type', 'application/json');
@@ -440,8 +429,21 @@ $(document).ready(function () {
                 console.log("Error");
                 toastr["error"]("Unable to Reschedule Flights", "Error");
             }
+            const outer_div=document.getElementById("outer_div");
+            outer_div.innerHTML = reschedulePage;
         };
         xhr.send(JSON.stringify(formData));
+        outer_div.innerHTML = `
+        <div class="lds-ring">
+            <div></div>
+            <div></div>
+            <div></div>
+            <div></div>
+        </div>
+        `;
+        outer_div.style.display = "grid";
+        outer_div.style.placeItems = "center";
+        outer_div.style.backgroundColor="transparent";
     });
     
 
