@@ -149,9 +149,11 @@ if (!todo) {
 }
 
 function CreateToDoItems() {
-    if (todoValue.value === "") {
+    if (todoValue.value == "") {
         todoAlert.innerText = "Please enter the Flight ID!";
         todoValue.focus();
+        setAlertMessage("Please enter the Flight ID!");
+        return
     } else {
         let IsPresent = false;
         todo.forEach((element) => {
@@ -517,14 +519,19 @@ function updateToggleLabel() {
 }
 
 document.getElementById('reschedule-button').addEventListener('click', function () {
-    const label = document.getElementById("toggleLabel");
+    const mode = document.getElementById("toggleLabel");
+    let flights = []
+    todo.forEach((element) => {
+        flights.push(element.item);
+    });
     fetch('/reschedule', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-            "Mode": label.textContent
+            "Mode": mode.textContent,
+            "Flights" : flights
         })
     })
         .then(response => response.json())

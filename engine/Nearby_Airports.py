@@ -1,9 +1,10 @@
 import pandas as pd
 from nearby_airport_search import haversine
+import os 
 
-
+moduleDir = os.path.dirname(os.path.abspath(__file__))
 def nearby_airport(cancelled_flight_departure_airport, radius):
-    df = pd.read_csv('GlobalAirportDatabase.csv')
+    df = pd.read_csv(os.path.join(moduleDir, 'GlobalAirportDatabase.csv'))
 
     reference_airport_iata = cancelled_flight_departure_airport
     search_radius_km_D = radius

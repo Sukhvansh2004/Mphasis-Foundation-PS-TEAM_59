@@ -10,6 +10,7 @@ from nearby_airport_search import haversine
 from path_scoring import *
 import os
 
+moduleDir = os.path.dirname(os.path.abspath(__file__))
 def next_72hrsflights(flight_number, canceled_departure_datetime, sorted_dataframe):
     canceled_flight_index = sorted_dataframe[
         (sorted_dataframe['FlightNumber'] == flight_number) &
@@ -175,7 +176,7 @@ def decode(variable, unique_airports, flight_numbers, departure_time, df):
 
     return sol
 
-def main(*disruptions, INVENTORY_FILE=os.path.join("Files", "inv.csv"), AIRPORT_FILE='GlobalAirportDatabase.csv', PNR_FILE = os.path.join("Files", "pnrb.csv"), PASSENGER_LIST = os.path.join("Files", "pnrp.csv"), TOKEN = 'DEV-6ddf205adb6761bc0018a65f2496245457fe977f'):
+def main(*disruptions, INVENTORY_FILE=os.path.join(moduleDir, "Files", "inv.csv"), AIRPORT_FILE = os.path.join(moduleDir, 'GlobalAirportDatabase.csv'), PNR_FILE = os.path.join(moduleDir, "Files", "pnrb.csv"), PASSENGER_LIST = os.path.join(moduleDir, "Files", "pnrp.csv"), TOKEN = 'DEV-6ddf205adb6761bc0018a65f2496245457fe977f'):
     inventory_dataframe=pd.read_csv(INVENTORY_FILE)
 
     for disrupt in disruptions:

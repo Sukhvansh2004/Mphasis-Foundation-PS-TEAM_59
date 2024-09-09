@@ -1,6 +1,8 @@
 from pnr_reaccomodation import *
 from classical_pathfinding import * 
 import os
+
+moduleDir = os.path.dirname(os.path.abspath(__file__))
 def check_time_diff(flight_network, disrupted_flights):
     current_net = flight_network[flight_network['InventoryId'].isin(disrupted_flights)].copy()
     current_net.sort_values(by="DepartureDateTime", inplace=True)
@@ -29,7 +31,7 @@ def check_time_diff(flight_network, disrupted_flights):
         
     return final
      
-def main(*disruptions_all, INVENTORY_FILE=os.path.join("Files", "inv.csv"), PNR_FILE = os.path.join("Files", "pnrb.csv"), PASSENGER_LIST = os.path.join("Files", "pnrp.csv"), TOKEN = 'DEV-6ddf205adb6761bc0018a65f2496245457fe977f'):
+def main(*disruptions_all, INVENTORY_FILE=os.path.join(moduleDir, "Files", "inv.csv"), PNR_FILE = os.path.join(moduleDir, "Files", "pnrb.csv"), PASSENGER_LIST = os.path.join(moduleDir, "Files", "pnrp.csv"), TOKEN = 'DEV-6ddf205adb6761bc0018a65f2496245457fe977f'):
     flight_network = pd.read_csv(INVENTORY_FILE)
     PNR_list = pd.read_csv(PNR_FILE)
     passenger_details = pd.read_csv(PASSENGER_LIST)
