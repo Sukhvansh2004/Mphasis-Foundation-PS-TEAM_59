@@ -500,19 +500,19 @@ $(document).ready(function () {
     });
 });
 
-for (let i = 1; i <= 4; i++) {
-    document.querySelector("#upload-" + i).addEventListener("click", function () {
-        var clickEvent = document.createEvent('MouseEvents');
-        clickEvent.initMouseEvent('click', true, true, window,
-            0, 0, 0, 0, 0, false, false, false, false, 0, null);
-        document.querySelector("#actual-upload-" + i).dispatchEvent(clickEvent);
-    });
-    document.querySelector("#actual-upload-" + i).addEventListener("change", function () {
-        let val = this.value;
-        let filename = val.split(/(\\|\/)/g).pop();
-        document.querySelector("#upload-file-info-" + i).innerHTML = filename;
-    });
-}
+// for (let i = 1; i <= 4; i++) {
+//     document.querySelector("#upload-" + i).addEventListener("click", function () {
+//         var clickEvent = document.createEvent('MouseEvents');
+//         clickEvent.initMouseEvent('click', true, true, window,
+//             0, 0, 0, 0, 0, false, false, false, false, 0, null);
+//         document.querySelector("#actual-upload-" + i).dispatchEvent(clickEvent);
+//     });
+//     document.querySelector("#actual-upload-" + i).addEventListener("change", function () {
+//         let val = this.value;
+//         let filename = val.split(/(\\|\/)/g).pop();
+//         document.querySelector("#upload-file-info-" + i).innerHTML = filename;
+//     });
+// }
 
 
 var buttons = document.querySelectorAll('.ladda-button');
@@ -552,3 +552,29 @@ function updateToggleLabel() {
         label.style.color = "white"; // Default text color for Quantum
     }
 }
+
+
+for (let i = 1; i <= 4; i++) {
+    document.getElementById(`upload-${i}`).addEventListener('click', function() {
+      document.getElementById(`actual-upload-${i}`).click();
+    });
+  
+    document.getElementById(`actual-upload-${i}`).addEventListener('change', function(event) {
+      const fileInput = event.target;
+      const file = fileInput.files[0];
+  
+      if (file) {
+        document.getElementById(`sheet-link-label-${i}`).style.display = 'none';
+        document.getElementById(`upload-${i}`).style.display = 'none';
+        document.getElementById(`reupload-${i}`).style.display = 'inline';
+        document.getElementById(`or-${i}`).style.display = 'none';
+  
+        document.getElementById(`upload-file-info-${i}`).textContent = `Uploaded: ${file.name}`;
+  
+        const fileUrl = URL.createObjectURL(file);
+        const csvLink = document.getElementById(`csv-link-${i}`);
+        csvLink.href = fileUrl;
+        csvLink.style.display = 'inline';
+      }
+    });
+  }
