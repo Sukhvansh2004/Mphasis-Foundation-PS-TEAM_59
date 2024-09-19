@@ -541,10 +541,10 @@ li.deleted-item {
         border-color: rgba( 0, 0, 0, 0.07 );
         background-color: #58c2f8;
     }
-    .ladda-button.blue[data-loading] {
+    /* .ladda-button.blue[data-loading] {
         border-color: rgba( 0, 0, 0, 0.07 );
         background-color: #999;
-    }
+    } */
 
 /* Orange button */
 .ladda-button.orange {

@@ -138,10 +138,10 @@ toastr.options = {
     "hideMethod": "fadeOut"
 }
 
-const todoValue = document.getElementById("todoText");
-const todoAlert = document.getElementById("Alert");
-const listItems = document.getElementById("list-items");
-const addUpdate = document.getElementById("AddUpdateClick");
+let todoValue = document.getElementById("todoText");
+let todoAlert = document.getElementById("Alert");
+let listItems = document.getElementById("list-items");
+let addUpdate = document.getElementById("AddUpdateClick");
 
 // let todo = JSON.parse(localStorage.getItem("todo-list"));
 // if (!todo) {
@@ -149,6 +149,11 @@ todo = [];
 // }
 
 function CreateToDoItems() {
+    todoValue = document.getElementById("todoText");
+    todoAlert = document.getElementById("Alert");
+    listItems = document.getElementById("list-items");
+    addUpdate = document.getElementById("AddUpdateClick");
+    console.log("todoValue:", todoValue);
     if (todoValue.value == "") {
         todoAlert.innerText = "Please enter the Flight ID!";
         todoValue.focus();
@@ -293,8 +298,12 @@ function setAlertMessage(message) {
 }
 
 
+let reschedulePage;
+
+$(document).on("click", "#AddUpdateClick", CreateToDoItems);
 
 $(document).ready(function () {
+
     // Add event change event listener to all input elements
     $(".input_pnr_ranking_score").change(function () {
         let rowIndex = this.getAttribute("rowIndex");
@@ -398,39 +407,65 @@ $(document).ready(function () {
         xhr.send(formData);
     });
 
-    $("#reschedule-button").click(function () {
+
+
+    // $("#reschedule-button").click(function () {
+    $("#outer_div").on("click", "#reschedule-button", function () {
         const mode = $("#toggleLabel").text();
         const token = $('#token').val();
         let flights = [];
-        
+
         todo.forEach((element) => {
             flights.push(element.item);
         });
-        
+
         let formData = {
             "Mode": mode,
             "Flights": flights,
             "Token": token
         };
-        const outer_div=document.getElementById("outer_div");
-        const reschedulePage = outer_div.innerHTML;
+        const outer_div = document.getElementById("outer_div");
+        const outer_div_display = outer_div.style.display;
+        const outer_div_placeitems = outer_div.style.placeItems;
+        reschedulePage = outer_div.innerHTML;
         let xhr = new XMLHttpRequest();
         xhr.open("POST", "/reschedule", true);
         xhr.setRequestHeader('Content-Type', 'application/json');
+        let counter = 1;
+        let response;
         xhr.onload = function () {
             if (xhr.status == 200) {
-                let response = JSON.parse(this.responseText);
+                response = JSON.parse(this.responseText);
                 console.log('Success:', response);
                 let status = response["status"];
                 let title = response["title"];
                 let message = response["message"];
                 toastr[status](message, title);
             } else {
+                counter = 0
                 console.log("Error");
                 toastr["error"]("Unable to Reschedule Flights", "Error");
             }
-            const outer_div=document.getElementById("outer_div");
-            outer_div.innerHTML = reschedulePage;
+            const outer_div = document.getElementById("outer_div");
+            if (counter === 0) {
+                homepage();
+            }
+            else {
+                outer_div.innerHTML = `
+                <section>
+                    <button class="ladda-button blue" onclick="homepage()">
+                        <span class="label">Home Page</span>
+                        <!-- <span class="spinner"></span> -->
+                    </button>
+                </section>
+                <br>
+                <div>
+                    <h1>Results</h1>
+                </div>
+                `;
+                outer_div.style.display = outer_div_display;
+                outer_div.style.placeItems = outer_div_placeitems;
+            }
         };
         xhr.send(JSON.stringify(formData));
         outer_div.innerHTML = `
@@ -443,9 +478,10 @@ $(document).ready(function () {
         `;
         outer_div.style.display = "grid";
         outer_div.style.placeItems = "center";
-        outer_div.style.backgroundColor="transparent";
+        // outer_div.style.backgroundColor="transparent";
     });
-    
+    $("#AddUpdateClick").on("click", CreateToDoItems);
+
 
 
     $("#dashboard").click(function () {
@@ -514,21 +550,12 @@ $(document).ready(function () {
     });
 });
 
-// for (let i = 1; i <= 4; i++) {
-//     document.querySelector("#upload-" + i).addEventListener("click", function () {
-//         var clickEvent = document.createEvent('MouseEvents');
-//         clickEvent.initMouseEvent('click', true, true, window,
-//             0, 0, 0, 0, 0, false, false, false, false, 0, null);
-//         document.querySelector("#actual-upload-" + i).dispatchEvent(clickEvent);
-//     });
-//     document.querySelector("#actual-upload-" + i).addEventListener("change", function () {
-//         let val = this.value;
-//         let filename = val.split(/(\\|\/)/g).pop();
-//         document.querySelector("#upload-file-info-" + i).innerHTML = filename;
-//     });
-// }
 
-
+function homepage() {
+    const outer_div = document.getElementById("outer_div");
+    outer_div.innerHTML = reschedulePage;
+    // reattachListeners();
+}
 var buttons = document.querySelectorAll('.ladda-button');
 
 Array.prototype.slice.call(buttons).forEach(function (button) {
@@ -569,26 +596,26 @@ function updateToggleLabel() {
 
 
 for (let i = 1; i <= 4; i++) {
-    document.getElementById(`upload-${i}`).addEventListener('click', function() {
-      document.getElementById(`actual-upload-${i}`).click();
+    document.getElementById(`upload-${i}`).addEventListener('click', function () {
+        document.getElementById(`actual-upload-${i}`).click();
     });
-  
-    document.getElementById(`actual-upload-${i}`).addEventListener('change', function(event) {
-      const fileInput = event.target;
-      const file = fileInput.files[0];
-  
-      if (file) {
-        document.getElementById(`sheet-link-label-${i}`).style.display = 'none';
-        document.getElementById(`upload-${i}`).style.display = 'none';
-        document.getElementById(`reupload-${i}`).style.display = 'inline';
-        document.getElementById(`or-${i}`).style.display = 'none';
-  
-        document.getElementById(`upload-file-info-${i}`).textContent = `Uploaded: ${file.name}`;
-  
-        const fileUrl = URL.createObjectURL(file);
-        const csvLink = document.getElementById(`csv-link-${i}`);
-        csvLink.href = fileUrl;
-        csvLink.style.display = 'inline';
-      }
+
+    document.getElementById(`actual-upload-${i}`).addEventListener('change', function (event) {
+        const fileInput = event.target;
+        const file = fileInput.files[0];
+
+        if (file) {
+            document.getElementById(`sheet-link-label-${i}`).style.display = 'none';
+            document.getElementById(`upload-${i}`).style.display = 'none';
+            document.getElementById(`reupload-${i}`).style.display = 'inline';
+            document.getElementById(`or-${i}`).style.display = 'none';
+
+            document.getElementById(`upload-file-info-${i}`).textContent = `Uploaded: ${file.name}`;
+
+            const fileUrl = URL.createObjectURL(file);
+            const csvLink = document.getElementById(`csv-link-${i}`);
+            csvLink.href = fileUrl;
+            csvLink.style.display = 'inline';
+        }
     });
-  }
+}
