@@ -1,0 +1,7 @@
+docplex    
+qiskit_optimization    
+numpy    
+pandas    
+dimod    
+dwave-ocean-sdk 
+Flask==3.0.0
