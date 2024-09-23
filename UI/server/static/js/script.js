@@ -149,15 +149,12 @@ todo = [];
 // }
 
 function CreateToDoItems() {
-    todoValue = document.getElementById("todoText");
-    todoAlert = document.getElementById("Alert");
-    listItems = document.getElementById("list-items");
-    addUpdate = document.getElementById("AddUpdateClick");
-    console.log("todoValue:", todoValue);
-    if (todoValue.value == "") {
+    // console.log("todoValue:", todoValue.value);
+    if (todoValue.value === "") {
         todoAlert.innerText = "Please enter the Flight ID!";
         todoValue.focus();
         setAlertMessage("Please enter the Flight ID!");
+        console.log("heehe");
         return
     } else {
         let IsPresent = false;
@@ -418,7 +415,7 @@ $(document).ready(function () {
         todo.forEach((element) => {
             flights.push(element.item);
         });
-
+        console.log("flights:", flights);
         let formData = {
             "Mode": mode,
             "Flights": flights,
@@ -462,11 +459,14 @@ $(document).ready(function () {
                 </section>
                 <br>
                 <div>
-                    <h1>Results</h1>
+                    <h1 style="font-size: 24px; font-weight: bold; margin-bottom: 20px;">Results</h1>
+                    <div id="csvResults" style="display: grid; gap: 10px;"></div>
                 </div>
                 `;
                 outer_div.style.display = outer_div_display;
                 outer_div.style.placeItems = outer_div_placeitems;
+                // showFileDownloadOptions(['E:/work/InterIIT/final/Mphasis-Foundation-PS-TEAM_59/engine/Solutions/Default_solution_INV-ZZ-2946425.csv','E:/work/InterIIT/final/Mphasis-Foundation-PS-TEAM_59/engine/Solutions/Default_solution_INV-ZZ-4593004.csv']);
+                showFileDownloadOptions(default_sol);
             }
         };
         xhr.send(JSON.stringify(formData));
@@ -482,7 +482,7 @@ $(document).ready(function () {
         outer_div.style.placeItems = "center";
         // outer_div.style.backgroundColor="transparent";
     });
-    $("#AddUpdateClick").on("click", CreateToDoItems);
+    // $("#AddUpdateClick").on("click", CreateToDoItems);
 
 
 
@@ -553,9 +553,49 @@ $(document).ready(function () {
 });
 
 
+function showFileDownloadOptions(filesArray) {
+    const csvResultsDiv = document.getElementById('csvResults');
+    csvResultsDiv.innerHTML = ''; // Clear any existing content
+
+    if (filesArray.length === 0) {
+        // Handle case where no files are present
+        csvResultsDiv.innerHTML = '<p>No files available for download.</p>';
+    } else {
+        // If files are present, display file names and download buttons
+        filesArray.forEach((fileUrl, index) => {
+            const fileName = fileUrl.split('/').pop(); // Extract file name from URL/path
+            const dynamicPart = fileName.match(/INV-ZZ-\d+/)[0]; // Extract the dynamic part (INV-ZZ-2946425)
+
+            csvResultsDiv.innerHTML += `
+                <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px; border: 1px solid #ccc; border-radius: 5px;">
+                    <span style="font-size: 18px; font-weight: 500;">${dynamicPart}</span>
+                    <button onclick="downloadFile('${fileUrl}')" style="padding: 8px 16px; background-color: #28a745; color: white; border: none; border-radius: 5px; cursor: pointer;">
+                        Download
+                    </button>
+                </div>
+            `;
+        });
+    }
+}
+
+// Function to handle file download
+function downloadFile(fileUrl) {
+    console.log("Downloading file from URL:", fileUrl);
+    const a = document.createElement('a');
+    a.href = fileUrl;
+    a.download = fileUrl.split('/').pop(); // Set file name for download
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+}
+
 function homepage() {
     const outer_div = document.getElementById("outer_div");
     outer_div.innerHTML = reschedulePage;
+    todoValue = document.getElementById("todoText");
+    todoAlert = document.getElementById("Alert");
+    listItems = document.getElementById("list-items");
+    addUpdate = document.getElementById("AddUpdateClick");
     // reattachListeners();
 }
 var buttons = document.querySelectorAll('.ladda-button');

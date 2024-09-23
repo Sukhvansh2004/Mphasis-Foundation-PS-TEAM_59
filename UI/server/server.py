@@ -162,7 +162,8 @@ def reschedule():
         response = {
             'status' : 'error',
             'title' : 'Unable to Reschedule Flights',
-            'message' : f'{e}'
+            'message' : f'{e}',
+            'result': [[], []]
         }
 
         return response
