@@ -144,14 +144,15 @@ def reschedule():
     mode = data["Mode"]
     try:
         if(mode == 'Quantum'):
-            quantum(*data["Flights"], TOKEN=data["Token"])
+            defaults, exceptions = quantum(*data["Flights"], TOKEN=data["Token"])
         else:
-            hybrid(*data["Flights"], TOKEN=data["Token"])
+            defaults, exceptions = hybrid(*data["Flights"], TOKEN=data["Token"])
             
         response = {
             'status': 'success',
             'title': 'Success',
-            'message': 'Flights rescheduled Successfully'
+            'message': 'Flights rescheduled Successfully',
+            'result': [defaults, exceptions]
         }
     
         return response

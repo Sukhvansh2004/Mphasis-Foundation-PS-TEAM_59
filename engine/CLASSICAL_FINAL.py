@@ -44,6 +44,8 @@ def main(*disruptions_all, INVENTORY_FILE=os.path.join(moduleDir, "Files", "inv.
     passenger_details = pd.read_csv(PASSENGER_LIST)
     disruptions_all = check_time_diff(flight_network, list(disruptions_all))
     
+    defaults = []
+    exceptions = []
     for disruptions in disruptions_all:
         # Create Object and run solve function
         solver = pathfind_recursion(flight_network, disruptions, scoring_criteria= scoring_criteria_Flights, toggle = scoring_criteria_Flights_toggle, verbose= 0, stopovers= 2)
@@ -75,8 +77,12 @@ def main(*disruptions_all, INVENTORY_FILE=os.path.join(moduleDir, "Files", "inv.
             sampleset =  reaccomodation(PNR, paths, scores, alpha, sources[disrupt], destinations[disrupt], impacted_pax[disrupt], disrupt, TOKEN)
         
             if sampleset is not None and sampleset.first.energy<0:
-                df1 = pd.read_csv(os.path.join(moduleDir, "Solutions", f"Default_solution_{disrupt}.csv"))
-                df2 = pd.read_csv(os.path.join(moduleDir, "Solutions", f"Exception_list_{disrupt}.csv"))
+                default_path = os.path.join(moduleDir, "Solutions", f"Default_solution_{disrupt}.csv")
+                except_path = os.path.join(moduleDir, "Solutions", f"Exception_list_{disrupt}.csv")
+                defaults.append(default_path)
+                exceptions.append(except_path)
+                df1 = pd.read_csv(default_path)
+                df2 = pd.read_csv(except_path)
 
                 for i in range(len(df1)):
                     flight_id = df1["Flight ID"][i]
@@ -105,7 +111,8 @@ def main(*disruptions_all, INVENTORY_FILE=os.path.join(moduleDir, "Files", "inv.
                         flight_network.loc[inventory_id_condition, "PC_AvailableInventory"] -= Passengers_flight['PAX_CNT'].loc[PNR_ID]
                     else:
                         flight_network.loc[inventory_id_condition, "EC_AvailableInventory"] -= Passengers_flight['PAX_CNT'].loc[PNR_ID]
-                        
+    
+    return [defaults, exceptions]
         
 if __name__ == '__main__':
     main("INV-ZZ-3174758", TOKEN='DEV-12b7e5b3bee7351638023f6bf954329397740cbe')

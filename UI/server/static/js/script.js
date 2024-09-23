@@ -440,6 +440,8 @@ $(document).ready(function () {
                 let status = response["status"];
                 let title = response["title"];
                 let message = response["message"];
+                let default_sol = response['result'][0];
+                let except_sol = response['result'][1];
                 toastr[status](message, title);
             } else {
                 counter = 0
