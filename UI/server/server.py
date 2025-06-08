@@ -9,7 +9,7 @@ enginePath = os.path.join(current_dir, "engine")
 if(os.path.isdir(enginePath)):
     sys.path.append(enginePath)
 
-from CLASSICAL_FINAL import main as hybrid
+from HYBRID_FINAL import main as hybrid
 from QUANTUM_FINAL import main as quantum
 
 app = Flask(__name__)

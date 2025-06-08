@@ -1,0 +1,1 @@
+FLASK_APP=UI\server\server.py
