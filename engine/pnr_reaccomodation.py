@@ -486,10 +486,10 @@ def parse_solution_bqm(sampleset: dimod.SampleSet, passenger_flights, disrupt, a
     return feasible_sampleset
 
 #FUNCTION TO SOLVE THE KNAPSACK PROBLEM AND GIVE AN OUTPUT AS CSV FILES
-def reaccomodation(PNR, paths, reward, alpha, src, dest, passenger_flights, disrupt, TOKEN, method='bqm'):
+def reaccomodation(PNR, paths, reward, alpha, src, dest, passenger_flights, disrupt, TOKEN, method='simulate'):
     """Solve a knapsack problem using a CQM solver."""
 
-    if method == 'cqm':
+    if method != 'simulate':
         sampler = LeapHybridCQMSampler(token=TOKEN)
         cqm = build_knapsack_cqm(PNR, paths, reward, alpha, src, dest)
 
@@ -506,7 +506,7 @@ def reaccomodation(PNR, paths, reward, alpha, src, dest, passenger_flights, disr
         print("Submitting to simulated annealing solver")
         sampleset = sampler.sample(
             bqm, 
-            num_reads=10, 
+            num_reads=1000, 
             # num_sweeps=num_sweeps,
             # beta_range=beta_range
         )
