@@ -392,116 +392,98 @@ def parse_solution_cqm(sampleset: dimod.SampleSet, passenger_flights, disrupt, a
         
     return feasible_sampleset
 
-def parse_solution_bqm(sampleset, passenger_flights, disrupt, abs_alpha, scores, paths):
-    """Translate the sampler sample returned from solver to shipped items.
+def parse_solution_bqm(sampleset: dimod.SampleSet, passenger_flights, disrupt, abs_alpha, scores, paths):
+    """Translate the sampler sample returned from solver to shipped items for BQM solver."""
+    # Attempt filter feasible samples
+    try:
+        feasible_sampleset = sampleset.filter(lambda row: row.is_feasible)
+    except Exception:
+        feasible_sampleset = sampleset
 
-    Args:
-        sampleset (dimod.Sampleset):
-            Samples returned from the solver.
-    """
-    # feasible_sampleset = sampleset.filter(lambda row: row.is_feasible)
+    if not len(feasible_sampleset):
+        print("No feasible solution found")
+        return None
 
-    # if not len(feasible_sampleset):
-    #     print("No feasible solution found")
-    #     return None
+    # Extract energies safely without ambiguous truth checks
+    if 'energy' in sampleset.data_vectors:
+        energies = list(sampleset.data_vectors['energy'])
+    else:
+        energies = [s.energy for s in sampleset]
 
-    # # Find the minimum energy
-    # min_energy = min(sampleset.data_vectors['energy'])
+    min_energy = min(energies)
+    min_energy_samples = [sample for sample, energy in zip(sampleset.samples(), energies) if energy == min_energy]
 
-    # # Collect all samples with the minimum energy
-    # min_energy_samples = [sample for sample, energy in zip(sampleset.samples(), sampleset.data_vectors['energy']) if energy == min_energy]
-
-    min_energy = sampleset.first.energy
-    min_energy_samples = list(sampleset.first.sample)
-    print(min_energy_samples)
-    #Converting normalised alpha to abs_alpha
+    # Convert normalized alpha to absolute
     for i in range(len(abs_alpha)):
-        abs_alpha[i] = abs_alpha[i] * (len(paths[i])**2)
+        abs_alpha[i] = abs_alpha[i] * (len(paths[i]) ** 2)
 
     dataframes = []
-    for sampler in min_energy_samples:  #Sampling samples with same energy
-        arr = list()
-        
-        nos = 0
-        for i in sampler:
-            if sampler[i] == 1:
-                arr.append(i)
-                nos += 1
-                
-        if nos==0:
+    for sampler in min_energy_samples:
+        arr = [var for var, val in sampler.items() if val == 1]
+        if not arr:
             continue
-        
-        df = pd.DataFrame(arr)
-        
-        df.rename(columns={0: 'Path', 1: 'Flight ID', 2: 'PNR ID', 3: 'Class'}, inplace=True)
-            # Find the most frequent value(s)
-        most_frequent_values = df['Path'].mode()
-            
-            # Getting all the unique paths
-        unique_paths = most_frequent_values.unique()
-        max_paths = [unique_paths[0]]  #Path with the highest score
-        mpth_score = abs_alpha[unique_paths[0]] #Paths with the highest scores
-        
-        if len(unique_paths) > 1:
-            for path in unique_paths[1:]:
-                    if abs_alpha[path] > mpth_score: #Paths with higher score replace all low scores path
-                        mpth_score = abs_alpha[path]
-                        max_paths = [path]
-                    elif abs_alpha[path] == mpth_score: #Paths with equal score are appended
-                        max_paths.append(path)
-        
-        if len(max_paths) > 1: #If still there are more than one unqiue paths check PNRs
-            selecter = []    
-            for path in max_paths:
-                check_df = df[df['Path'] == path]
-                n = len(paths[path])  #Checking path length
-                rank = 0
-                for pnr in range(len(check_df)):  #Adding PNR scores together
-                    rank += scores[check_df.iloc[pnr]['PNR_ID']][check_df.iloc[pnr]['Class']]
-                rank /= n 
-                selecter.append([path, rank])
-            max_paths = [max(selecter, key = lambda x: x[1])[0]]  #Selecting the maximum ranked path
-            
-        most_frequent_values = df[df['Path'] == max_paths[0]]['Path']   
-         
-        # Filter DataFrame to remove rows with the most frequent values
-        filtered_df = df[~df['Path'].isin(most_frequent_values)]
 
-        # Create a DataFrame with the removed rows
-        removed_df = df[df['Path'].isin(most_frequent_values)]
-        
-        absent = passenger_flights[~passenger_flights['RECLOC'].isin(df['PNR ID'])][['RECLOC']].drop_duplicates(subset='RECLOC')
-    
+        df = pd.DataFrame(arr)
+        df.rename(columns={0: 'Path', 1: 'Flight ID', 2: 'PNR ID', 3: 'Class'}, inplace=True)
+
+        # Identify highest-scoring path(s)
+        modes = df['Path'].mode()
+        unique_paths = modes.unique()
+        max_paths = [unique_paths[0]]
+        mpth_score = abs_alpha[max_paths[0]]
+        for path in unique_paths[1:]:
+            score = abs_alpha[path]
+            if score > mpth_score:
+                mpth_score = score
+                max_paths = [path]
+            elif score == mpth_score:
+                max_paths.append(path)
+
+        # Tie-break by average PNR score
+        if len(max_paths) > 1:
+            rankings = []
+            for path in max_paths:
+                sub = df[df['Path'] == path]
+                total = sum(scores[row['PNR ID']][row['Class']] for _, row in sub.iterrows())
+                avg = total / len(paths[path])
+                rankings.append((path, avg))
+            max_paths = [max(rankings, key=lambda x: x[1])[0]]
+
+        removed_df = df[df['Path'].isin(max_paths)]
+        filtered_df = df[~df['Path'].isin(max_paths)]
+
+        # Add absent passengers
+        absent = passenger_flights[~passenger_flights['RECLOC'].isin(df['PNR ID'])][['RECLOC']].drop_duplicates()
         absent.rename(columns={'RECLOC': 'PNR ID'}, inplace=True)
         filtered_df = pd.concat([filtered_df, absent], ignore_index=True)
-        
+
         dataframes.append([removed_df, filtered_df])
-    
-    
-    if len(dataframes) > 1:  #If more than one sample with same energies
-        subframes = [dataframes[0]]
-        n = len(subframes[0][0]['PNR ID'].unique())
-        for i in dataframes[1:]:   #Sample based on the no. of passengers accomodates
-            if len(i[0]['PNR ID'].unique()) == n:
-                subframes.append(i)
-            elif len(i[0]['PNR ID'].unique()) > n:
-                subframes = [i]
-                n = len(i[0]['PNR ID'].unique())
-        
-        if len(subframes) > 1:  #If still equal check path score
-            subframes = [max(subframes, key = lambda x: abs_alpha[x[0]['Path'].iloc[0]])]
-        
-        dataframes = subframes  #Most aprropriate solution
-    
-    if len(dataframes) != 0: 
-        dataframes[0][0].to_csv(os.path.join(moduleDir, "Solutions", f"Default_solution_{disrupt}.csv"))
-        dataframes[0][1].to_csv(os.path.join(moduleDir, "Solutions", f"Exception_list_{disrupt}.csv"))
-        
-        print('Accomodations done, check the default and the exception files')
+
+    # Resolve multiple optimal samples
+    if len(dataframes) > 1:
+        best = dataframes[0]
+        best_count = best[0]['PNR ID'].nunique()
+        for entry in dataframes[1:]:
+            count = entry[0]['PNR ID'].nunique()
+            if count > best_count:
+                best, best_count = entry, count
+            elif count == best_count:
+                sc_old = abs_alpha[best[0]['Path'].iloc[0]]
+                sc_new = abs_alpha[entry[0]['Path'].iloc[0]]
+                if sc_new > sc_old:
+                    best = entry
+        dataframes = [best]
+
+    # Write CSV outputs
+    if dataframes:
+        default_df, exception_df = dataframes[0]
+        default_df.to_csv(os.path.join(moduleDir, "Solutions", f"Default_solution_{disrupt}.csv"), index=False)
+        exception_df.to_csv(os.path.join(moduleDir, "Solutions", f"Exception_list_{disrupt}.csv"), index=False)
+        print('Accommodations done, check the default and the exception files')
     else:
-        print("No accomodations available")
-        
-    return sampleset
+        print("No accommodations available")
+
+    return feasible_sampleset
 
 #FUNCTION TO SOLVE THE KNAPSACK PROBLEM AND GIVE AN OUTPUT AS CSV FILES
 def reaccomodation(PNR, paths, reward, alpha, src, dest, passenger_flights, disrupt, TOKEN, method='bqm'):
