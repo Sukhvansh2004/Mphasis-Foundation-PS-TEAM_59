@@ -6,6 +6,7 @@ from dwave.system import LeapHybridCQMSampler
 import numpy as np
 import pandas as pd
 import os
+import ast
 
 moduleDir = os.path.dirname(os.path.abspath(__file__))
 #Defining a class Passenger for a particular PNR
@@ -419,12 +420,29 @@ def parse_solution_bqm(sampleset: dimod.SampleSet, passenger_flights, disrupt, a
 
     dataframes = []
     for sampler in min_energy_samples:
-        arr = [var for var, val in sampler.items() if val == 1]
+        arr = []
+        for var, val in sampler.items():
+            if val != 1:
+                continue
+            # only consider original four‑tuple variables, not slack vars
+            if isinstance(var, tuple):
+                tup = var
+            elif isinstance(var, str) and var.startswith("("):
+                try:
+                    tup = ast.literal_eval(var)
+                except (SyntaxError, ValueError):
+                    continue
+            else:
+                # skip slack_... or any other labels
+                continue
+
+            # ensure it's exactly our (path,flight,pnr,cls) tuple
+            if isinstance(tup, tuple) and len(tup) == 4:
+                arr.append(tup)
+
         if not arr:
             continue
-
-        df = pd.DataFrame(arr)
-        df.rename(columns={0: 'Path', 1: 'Flight ID', 2: 'PNR ID', 3: 'Class'}, inplace=True)
+        df = pd.DataFrame(arr, columns=['Path','Flight ID','PNR ID','Class'])
 
         # Identify highest-scoring path(s)
         modes = df['Path'].mode()
@@ -501,7 +519,34 @@ def reaccomodation(PNR, paths, reward, alpha, src, dest, passenger_flights, disr
     else:
         sampler = SimulatedAnnealingSampler()
 
-        bqm = build_knapsack_bqm(PNR, paths, reward, alpha, src, dest, lagrange_9=1.0, lagrange_10=1.0, lagrange_11=1.0, lagrange_12=1.0, lagrange_13=1.0)
+        bqm = build_knapsack_bqm(PNR, paths, reward, alpha, src, dest,
+                                lagrange_9=0, lagrange_10=0,
+                                lagrange_11=0, lagrange_12=0, lagrange_13=0)
+
+        max_h = max(abs(v) for v in bqm.linear.values())
+
+        # smallest nonzero coefficient in any constraint is 1 (for your flow constraints)
+        min_coeff = 1  
+
+        # safety factor
+        gamma = 1.2
+
+        # capacity: worst violation = max PAX you could add illegally
+        max_PAX = max(pax.PAX for pax in PNR)
+
+        lagrange_9 = gamma * max_h / max_PAX
+        # for the ≤1 constraints, worst violation = 1 extra path
+        lagrange_10 = lagrange_11 = gamma * max_h / 1
+        # for equals, you could violate by 1 on both sides → double gain
+        lagrange_12 = lagrange_13 = gamma * 2*max_h / 1
+
+        # now rebuild and solve
+        bqm = build_knapsack_bqm(PNR, paths, reward, alpha, src, dest,
+                                lagrange_9=lagrange_9,
+                                lagrange_10=lagrange_10,
+                                lagrange_11=lagrange_11,
+                                lagrange_12=lagrange_12,
+                                lagrange_13=lagrange_13)
         
         print("Submitting to simulated annealing solver")
         sampleset = sampler.sample(
