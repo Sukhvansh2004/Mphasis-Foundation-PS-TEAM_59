@@ -1,6 +1,8 @@
 from pnr_reaccomodation import *
 from dimod import BINARY
 from docplex.mp.model import Model
+from dimod.constrained import cqm_to_bqm
+from neal import SimulatedAnnealingSampler
 from qiskit_optimization.translators import from_docplex_mp
 import numpy as np
 import math
@@ -10,6 +12,7 @@ from nearby_airport_search import haversine
 from path_scoring import *
 import os
 
+METHOD = 'SIMULATE'
 moduleDir = os.path.dirname(os.path.abspath(__file__))
 def next_72hrsflights(flight_number, canceled_departure_datetime, sorted_dataframe):
     canceled_flight_index = sorted_dataframe[
@@ -176,7 +179,7 @@ def decode(variable, unique_airports, flight_numbers, departure_time, df):
 
     return sol
 
-def main(*disruptions, INVENTORY_FILE=os.path.join(moduleDir, "Files", "inv.csv"), AIRPORT_FILE = os.path.join(moduleDir, 'GlobalAirportDatabase.csv'), PNR_FILE = os.path.join(moduleDir, "Files", "pnrb.csv"), PASSENGER_LIST = os.path.join(moduleDir, "Files", "pnrp.csv"), TOKEN = 'DEV-6ddf205adb6761bc0018a65f2496245457fe977f'):
+def main(*disruptions, INVENTORY_FILE=os.path.join(moduleDir, "Files", "inv.csv"), AIRPORT_FILE = os.path.join(moduleDir, 'GlobalAirportDatabase.csv'), PNR_FILE = os.path.join(moduleDir, "Files", "pnrb.csv"), PASSENGER_LIST = os.path.join(moduleDir, "Files", "pnrp.csv"), TOKEN = 'DEV-6ddf205adb6761bc0018a65f2496245457fe977f', method=METHOD):
     inventory_dataframe=pd.read_csv(INVENTORY_FILE)
 
     for disrupt in disruptions:
@@ -186,14 +189,14 @@ def main(*disruptions, INVENTORY_FILE=os.path.join(moduleDir, "Files", "inv.csv"
         schedule_dataframe = inventory_dataframe.sort_values(by="DepartureDateTime").reset_index(drop=True)
 
         index = inventory_dataframe.index[inventory_dataframe['InventoryId'] == disrupt].tolist()[0]
-        print(schedule_dataframe.index[schedule_dataframe['InventoryId']=="INV-ZZ-2774494"].tolist())
-        print(schedule_dataframe.iloc[index])
+        # print(schedule_dataframe.index[schedule_dataframe['InventoryId']=="INV-ZZ-2774494"].tolist())
+        # print(schedule_dataframe.iloc[index])
 
         cancelled_flight=schedule_dataframe.iloc[index]
         reduced_flights=next_72hrsflights(cancelled_flight["FlightNumber"],cancelled_flight["DepartureDateTime"],schedule_dataframe)
 
-        print(cancelled_flight["DepartureDateTime"])
-        print(reduced_flights["DepartureDateTime"])
+        # print(cancelled_flight["DepartureDateTime"])
+        # print(reduced_flights["DepartureDateTime"])
 
         """BELOW WE HAVE DEFINED THRREE FUNCTIONS THAT FINDS ALL THE DIRECT FLIGHTS WITHIN THAT 72 HOUR TIME WINDOW AND FINDS POSSIBLE INTERCONNECTING NODES WHEN CONSIDERING PATHS UPTO 2 INTERCONNECTING NODES.(THE FUNCTIONS BELOW DON'T TAKE TIME INTO ACCOUNT i.e the downline flights may be backward in time)"""
 
@@ -211,12 +214,12 @@ def main(*disruptions, INVENTORY_FILE=os.path.join(moduleDir, "Files", "inv.csv"
 
         df_airports = pd.read_csv(AIRPORT_FILE)
 
-    # Check if the reference airport exists in the DataFrame
+        # Check if the reference airport exists in the DataFrame
         if reference_airport_iata in df_airports['IATA'].values:
             # Get the reference airport's latitude and longitude
             reference_airport = df_airports[df_airports['IATA'] == reference_airport_iata].iloc[0]
-            print('INFORMATION ABOUT THE DESTINATION AIRPORT')
-            print(reference_airport,'\n')
+            # print('INFORMATION ABOUT THE DESTINATION AIRPORT')
+            # print(reference_airport,'\n')
             ref_lat, ref_lon = reference_airport['Decimal Latitude'], reference_airport['Decimal Longitude']
 
             # Calculate the distance of all airports from the reference airport
@@ -228,13 +231,13 @@ def main(*disruptions, INVENTORY_FILE=os.path.join(moduleDir, "Files", "inv.csv"
 
             # Drop the reference airport itself from the list
             df_nearby_airports = df_nearby_airports[df_nearby_airports['IATA'] != reference_airport_iata]
-            print('TOTAL NEARBY AIRPORTS FOUND: ',len(df_nearby_airports))
-            # Print the nearby airports
-            print(df_nearby_airports[['ICAO', 'IATA', 'Airport Name', 'City', 'Country', 'Distance_km']])
-            print('\n')
-            print('IATA code for nearby airports: ')
+            # print('TOTAL NEARBY AIRPORTS FOUND: ',len(df_nearby_airports))
+            # # Print the nearby airports
+            # print(df_nearby_airports[['ICAO', 'IATA', 'Airport Name', 'City', 'Country', 'Distance_km']])
+            # print('\n')
+            # print('IATA code for nearby airports: ')
             E_prime=df_nearby_airports['IATA'].tolist()
-            print(E_prime)
+            # print(E_prime)
         else:
             print(f"Airport with IATA code '{reference_airport_iata}' not found in the database.")
 
@@ -246,8 +249,8 @@ def main(*disruptions, INVENTORY_FILE=os.path.join(moduleDir, "Files", "inv.csv"
         if reference_airport_iata in df_airports['IATA'].values:
             # Get the reference airport's latitude and longitude
             reference_airport = df_airports[df_airports['IATA'] == reference_airport_iata].iloc[0]
-            print('INFORMATION ABOUT THE DESTINATION AIRPORT')
-            print(reference_airport,'\n')
+            # print('INFORMATION ABOUT THE DESTINATION AIRPORT')
+            # print(reference_airport,'\n')
             ref_lat, ref_lon = reference_airport['Decimal Latitude'], reference_airport['Decimal Longitude']
 
         # Calculate the distance of all airports from the reference airport
@@ -259,13 +262,13 @@ def main(*disruptions, INVENTORY_FILE=os.path.join(moduleDir, "Files", "inv.csv"
 
         # Drop the reference airport itself from the list
             df_nearby_airports = df_nearby_airports[df_nearby_airports['IATA'] != reference_airport_iata]
-            print('TOTAL NEARBY AIRPORTS FOUND: ',len(df_nearby_airports))
-            # Print the nearby airports
-            print(df_nearby_airports[['ICAO', 'IATA', 'Airport Name', 'City', 'Country', 'Distance_km']])
-            print('\n')
-            print('IATA code for nearby airports: ')
+            # print('TOTAL NEARBY AIRPORTS FOUND: ',len(df_nearby_airports))
+            # # Print the nearby airports
+            # print(df_nearby_airports[['ICAO', 'IATA', 'Airport Name', 'City', 'Country', 'Distance_km']])
+            # print('\n')
+            # print('IATA code for nearby airports: ')
             E_prime_d=df_nearby_airports['IATA'].tolist()
-            print(E_prime_d)
+            # print(E_prime_d)
         else:
             print(f"Airport with IATA code '{reference_airport_iata}' not found in the database.")
 
@@ -280,17 +283,17 @@ def main(*disruptions, INVENTORY_FILE=os.path.join(moduleDir, "Files", "inv.csv"
         reduced_data = pd.concat([flight1, flight2, flight3], ignore_index=True)
         reduced_data = reduced_data.drop_duplicates()
 
-        print(cancelled_flight_arrival_airport)
-        print(cancelled_flight_departure_airport)
+        # print(cancelled_flight_arrival_airport)
+        # print(cancelled_flight_departure_airport)
 
-        print(len(flight2))
-        print(len(flight3))
+        # print(len(flight2))
+        # print(len(flight3))
 
-        print(reduced_flights[["DepartureAirport","ArrivalAirport"]])
+        # print(reduced_flights[["DepartureAirport","ArrivalAirport"]])
 
-        """CHECKING IF THE REDUCED DATA HAS DIRECT FLIGHTS OR NOT"""
+        # """CHECKING IF THE REDUCED DATA HAS DIRECT FLIGHTS OR NOT"""
 
-        print(reduced_data[["DepartureAirport","ArrivalAirport"]])
+        # print(reduced_data[["DepartureAirport","ArrivalAirport"]])
 
         """BEGINNING TO ENCODE THE UNIQUE VALUES FOR EACH INDEX NUMERICALLY."""
 
@@ -300,17 +303,17 @@ def main(*disruptions, INVENTORY_FILE=os.path.join(moduleDir, "Files", "inv.csv"
         cancelled_flight_airports=np.array([cancelled_flight_arrival_airport,cancelled_flight_departure_airport])
         unique_airports = np.concatenate((unique_airports, cancelled_flight_airports))
         unique_airports = [code.strip() for code in unique_airports]
-        print(unique_airports)
+        # print(unique_airports)
         unique_airports=np.unique(unique_airports)
-        print(unique_airports)
+        # print(unique_airports)
         flight_no=reduced_data["FlightNumber"].unique()
         departure_time = pd.to_datetime(reduced_data["DepartureDateTime"]).unique()
         departure_time = sorted(departure_time)
 
-        """BELOW ARE ALL POSSIBLE ARRIVAL AND DEPARTURE AIRPORTS(INCLUDING INTERMEDIATE NODES AS WELL)"""
+        # """BELOW ARE ALL POSSIBLE ARRIVAL AND DEPARTURE AIRPORTS(INCLUDING INTERMEDIATE NODES AS WELL)"""
 
-        print(departure_airports)
-        print(arrival_airports)
+        # print(departure_airports)
+        # print(arrival_airports)
 
         """NOW CREATING LIST OF ACTUAL STARTING AIRPORTS AND ACTUAL DEPARTURE AIRPORTS FOR THE WHOLE PATH WHOSE FLIGHTS ARE AVAILABLE"""
 
@@ -321,7 +324,7 @@ def main(*disruptions, INVENTORY_FILE=os.path.join(moduleDir, "Files", "inv.csv"
         flght_no=len(flight_no)
         time_no=len(departure_time)
 
-        print(depart_no,flght_no,time_no)
+        # print(depart_no,flght_no,time_no)
 
         
 
@@ -333,15 +336,15 @@ def main(*disruptions, INVENTORY_FILE=os.path.join(moduleDir, "Files", "inv.csv"
         for i in final_arr_airports:
             if i in arrival_airport_dict.keys():
                 arrival_airports_encoded_indices.append(arrival_airport_dict[i])
-        print(arrival_airports_encoded_indices)
+        # print(arrival_airports_encoded_indices)
         for i in final_dep_airports:
             if i in departure_airport_dict.keys():
                 departure_airports_encoded_indices.append(departure_airport_dict[i])
-        print(departure_airports_encoded_indices)
+        # print(departure_airports_encoded_indices)
 
-        #print(flight_exist)
-        print(departure_time_tensor)
-        print(arrival_time_tensor)
+        # #print(flight_exist)
+        # print(departure_time_tensor)
+        # print(arrival_time_tensor)
 
         """HERE, 'n' REPRESENTS THE MAXIMUM ALLOWED FLIGHTS IN A PATH.
 
@@ -362,10 +365,10 @@ def main(*disruptions, INVENTORY_FILE=os.path.join(moduleDir, "Files", "inv.csv"
         r = 0.2
         m=2
 
-        print(start_node)
-        print(end_node)
-        print(st)
-        print(et)
+        # print(start_node)
+        # print(end_node)
+        # print(st)
+        # print(et)
 
         mdl = Model("docplex model")
         variables = {(i, j, k, l): mdl.binary_var(name=f'q({i},{j},{k},{l})')
@@ -391,81 +394,6 @@ def main(*disruptions, INVENTORY_FILE=os.path.join(moduleDir, "Files", "inv.csv"
 
         var_vec = np.array(variables.values())
         print(var_vec)
-
-        """BELOW WE HAD INITIALLY ATTEMPTED TO CREATE OUR CONSTRAINTS VIA MATRIX MULTIPLICATION TO DECREASE THE RUNTUME BUT DIDN'T FULLY ATTEMPT THIS APPROACH."""
-
-        # def find_index_range(s, depart_no, arriv_no, flght_no, time_no):
-        #     """
-        #     Find the start and end indices in the flattened array for a given node 's'.
-        #     """
-    #     start_index = s * arriv_no * flght_no * time_no
-    #     end_index = start_index + arriv_no * flght_no * time_no
-    #     return start_index, end_index
-
-    # def find_column_indices(column_j, depart_no, arriv_no, flght_no, time_no):
-    #     """
-    #     Find indices in the flattened array for all elements of column 'j' in the second dimension (arriv_no).
-    #     """
-    #     # Calculate the step size, which is the number of elements in one complete pass through the dimensions after 'arriv_no'
-    #     step_size = flght_no * time_no
-
-    #     # Calculate the number of times to repeat the pattern
-    #     num_repeats = depart_no
-
-    #     # Initialize an empty list to store indices
-    #     indices = []
-
-    #     # Generate all indices for the column
-    #     for i in range(num_repeats):
-    #         first_index = i * arriv_no * flght_no * time_no + column_j * step_size
-    #         for k in range(flght_no * time_no):
-    #             indices.append(first_index + k)
-
-    #     return indices
-
-        num_constraints = 2  # Number of constraints (for a 2x1 vector)
-        cqm = ConstrainedQuadraticModel()
-    # variable_tensor=np.array([Binary(f'q({i},{j},{k},{l})') if flight_exist[i, j, k, l] == 1 else 0
-    #                              for i in range(depart_no)
-    #                              for j in range(arriv_no)
-    #                              for k in range(flght_no)
-    #                              for l in range(time_no)]).reshape(depart_no, arriv_no, flght_no, time_no)
-    # # Create binary variables and organize them into a matrix
-    # variables_matrix = np.array([Binary(f'q({i},{j},{k},{l})') if flight_exist[i, j, k, l] == 1 else 0
-    #                              for i in range(depart_no)
-    #                              for j in range(arriv_no)
-    #                              for k in range(flght_no)
-    #                              for l in range(time_no)]).reshape(depart_no, arriv_no, flght_no, time_no).flatten()
-    # n = len(variables_matrix)+1  # Replace with your desired size
-    # sc_matrix = np.ones((n, 1))
-    # ec_matrix = np.ones((n, 1))
-    # x,y=find_index_range(start_node, depart_no, arriv_no, flght_no, time_no)
-    # ind_list=find_column_indices(end_node, depart_no, arriv_no, flght_no, time_no)
-    # for i in range(1,n):
-    #     if i in range(x,y):
-    #         sc_matrix[i]=1
-    #     else:
-    #         sc_matrix[i]=0
-    # for i in range(1,n):
-    #     if i in ind_list:
-    #         ec_matrix[i]=1
-    #     else:
-    #         ec_matrix[i]=0
-    # # Set the first element to -1
-    # sc_matrix[0, 0] = 1
-    # variables_matrix= np.insert(variables_matrix, 0, -1)
-    # # Perform matrix multiplication to form a linear combination
-    # linear_combination = np.matmul(variables_matrix, sc_matrix)
-    # end_constraint = np.matmul(variables_matrix,ec_matrix)
-    # # Create a Constrained Quadratic Model
-
-
-    # # Add the linear combination to the CQM as an objective or a constraint
-    # # Example: Add as an objective
-    # #cqm.set_objective(linear_combination.sum())
-    # cqm.add_constraint(linear_combination.sum() == 0, label='start_constraint')
-    # cqm.add_constraint(end_constraint.sum() == 0, label='end_constraint') 
-        print(cqm)
 
         """WE DEFINED THE NECESSARY CONSTRAINTS AND AN OBJECTIVE FUNCTION THAT MINIMIZES THE DIFFERENCE BETWEEN THE ACTUAL ARRIVAL TIME AND ALTERNATE ARRIVAL TIME AND SIMILARLY MINIMIZES THE DIFFERENCE BETWEEN ACTUAL AND ALTERNATE DEPARTURE TI ME .
 
@@ -545,35 +473,33 @@ def main(*disruptions, INVENTORY_FILE=os.path.join(moduleDir, "Files", "inv.csv"
 
         if(total_flight_after_reduction>0):
             mod = from_docplex_mp(mdl)
-            print(mod.prettyprint())
+            # print(mod.prettyprint())
 
         """NOW WE DEFINE A CONSTRAINT QUADRATIC MODEL AND USE D-WAVE'S HYBRID SOLVER TO SAMPLE SOLUTIONS."""
 
         
+        # Initialize a new Constrained Quadratic Model
+        cqm = ConstrainedQuadraticModel()
 
-
-    # Initialize a new Constrained Quadratic Model
-        cqm2 = ConstrainedQuadraticModel()
-
-    # Transfer the objective function
+        # Transfer the objective function
         obj_linear = mod.objective.linear.to_dict()
         obj_quadratic = mod.objective.quadratic.to_dict()
         objective_bqm = BinaryQuadraticModel(obj_linear, obj_quadratic, mod.objective.constant, vartype=BINARY)
-        cqm2.set_objective(objective_bqm)
+        cqm.from_bqm(objective_bqm)
 
-    # Transfer the linear constraints
+        # Transfer the linear constraints
         for constraint in mod.linear_constraints:
             linear_terms = {mod.get_variable(i).name: coeff for i, coeff in enumerate(constraint.linear.to_array())}
             linear_bqm = BinaryQuadraticModel(linear_terms, {}, 0.0, vartype=BINARY)
 
             if constraint.sense == constraint.sense.LE:
-                cqm2.add_constraint(linear_bqm <= constraint.rhs, label=constraint.name)
+                cqm.add_constraint(linear_bqm <= constraint.rhs, label=constraint.name)
             elif constraint.sense == constraint.sense.GE:
-                cqm2.add_constraint(linear_bqm >= constraint.rhs, label=constraint.name)
+                cqm.add_constraint(linear_bqm >= constraint.rhs, label=constraint.name)
             else:
-                cqm2.add_constraint(linear_bqm == constraint.rhs, label=constraint.name)
+                cqm.add_constraint(linear_bqm == constraint.rhs, label=constraint.name)
 
-    # Transfer the quadratic constraints
+        # Transfer the quadratic constraints
         for constraint in mod.quadratic_constraints:
             linear_terms = {mod.get_variable(i).name: coeff for i, coeff in enumerate(constraint.linear.to_array())}
             quadratic_terms = {(mod.get_variable(i).name, mod.get_variable(j).name): coeff
@@ -581,35 +507,36 @@ def main(*disruptions, INVENTORY_FILE=os.path.join(moduleDir, "Files", "inv.csv"
             quadratic_bqm = BinaryQuadraticModel(linear_terms, quadratic_terms, 0.0, vartype=BINARY)
 
             if constraint.sense == constraint.sense.LE:
-                cqm2.add_constraint(quadratic_bqm <= constraint.rhs, label=constraint.name)
+                cqm.add_constraint(quadratic_bqm <= constraint.rhs, label=constraint.name)
             elif constraint.sense == constraint.sense.GE:
-                cqm2.add_constraint(quadratic_bqm >= constraint.rhs, label=constraint.name)
+                cqm.add_constraint(quadratic_bqm >= constraint.rhs, label=constraint.name)
             else:
-                cqm2.add_constraint(quadratic_bqm == constraint.rhs, label=constraint.name)
+                cqm.add_constraint(quadratic_bqm == constraint.rhs, label=constraint.name)
 
-    # Print the constructed CQM
-        print(cqm2)
-
-    # Solve the CQM using a D-Wave sampler (if needed)
-    # sampler = LeapHybridCQMSampler()
-    # result = sampler.sample_cqm(cqm2)
-    # best_solution = result.first
-    # print("Best solution:", best_solution)
 
         """PRINTING THE TOP N UNIQUE SOLUTIONS."""
 
         num_top_solutions = 5  # Set the number of top unique solutions to print
 
         if total_flight_after_reduction > 0:
-        # Initialize the Leap Hybrid CQM Sampler
-            sampler = LeapHybridCQMSampler(token=TOKEN)
-
-            try:
-            # Solve the CQM using the Leap Hybrid CQM Sampler
-                result = sampler.sample_cqm(cqm2)
+            # Initialize the Leap Hybrid CQM Sampler
+            if method == 'SIMULATE':
+                bqm = cqm_to_bqm(cqm)[0]
+                sampler = SimulatedAnnealingSampler()
+                print("Submitting to simulated annealing solver")
+                result = sampler.sample(
+                    bqm, 
+                    num_reads=1000, 
+                    # num_sweeps=num_sweeps,
+                    # beta_range=beta_range
+                )
+            else:
+                sampler = LeapHybridCQMSampler(token=TOKEN)
+                print("Submitting to Leap Hybrid CQM Sampler")
+                result = sampler.sample_cqm(cqm)
                 result = result.filter(lambda row: row.is_feasible)  # Filter for feasible solutions
 
-            # Collect unique feasible solutions
+            try:
                 unique_solutions = {}
                 for sample, energy, num_occurrences in result.data(['sample', 'energy', 'num_occurrences']):
                     # Create a hashable representation of the sample

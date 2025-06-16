@@ -1,6 +1,7 @@
 import dimod
 from dimod import ConstrainedQuadraticModel, BinaryQuadraticModel, QuadraticModel
 import dimod.sampleset
+from dimod.constrained import cqm_to_bqm
 from neal import SimulatedAnnealingSampler
 from dwave.system import LeapHybridCQMSampler
 import numpy as np
@@ -8,6 +9,7 @@ import pandas as pd
 import os
 import ast
 
+LANGRANGE = False  # Set to True if you want to use Lagrange multipliers for BQM
 moduleDir = os.path.dirname(os.path.abspath(__file__))
 #Defining a class Passenger for a particular PNR
 class Passenger:
@@ -278,6 +280,9 @@ def build_knapsack_bqm(PNR, paths, reward, alpha, src, dest, **kwargs):
         
     return bqm
 
+def build_knapsack_bqm_from_cqm(PNR, paths, reward, alpha, src, dest):
+    return cqm_to_bqm(build_knapsack_cqm(PNR, paths, reward, alpha, src, dest))[0]
+
 def get_iterable(qm: QuadraticModel):
     ret = []
     for pair in qm.iter_linear():
@@ -504,10 +509,10 @@ def parse_solution_bqm(sampleset: dimod.SampleSet, passenger_flights, disrupt, a
     return feasible_sampleset
 
 #FUNCTION TO SOLVE THE KNAPSACK PROBLEM AND GIVE AN OUTPUT AS CSV FILES
-def reaccomodation(PNR, paths, reward, alpha, src, dest, passenger_flights, disrupt, TOKEN, method='simulate'):
+def reaccomodation(PNR, paths, reward, alpha, src, dest, passenger_flights, disrupt, TOKEN, method='SIMULATE'):
     """Solve a knapsack problem using a CQM solver."""
 
-    if method != 'simulate':
+    if method != 'SIMULATE':
         sampler = LeapHybridCQMSampler(token=TOKEN)
         cqm = build_knapsack_cqm(PNR, paths, reward, alpha, src, dest)
 
@@ -519,35 +524,39 @@ def reaccomodation(PNR, paths, reward, alpha, src, dest, passenger_flights, disr
     else:
         sampler = SimulatedAnnealingSampler()
 
-        bqm = build_knapsack_bqm(PNR, paths, reward, alpha, src, dest,
-                                lagrange_9=0, lagrange_10=0,
-                                lagrange_11=0, lagrange_12=0, lagrange_13=0)
+        if LANGRANGE:
+            bqm = build_knapsack_bqm(PNR, paths, reward, alpha, src, dest,
+                                    lagrange_9=0, lagrange_10=0,
+                                    lagrange_11=0, lagrange_12=0, lagrange_13=0)
 
-        max_h = max(abs(v) for v in bqm.linear.values())
+            max_h = max(abs(v) for v in bqm.linear.values())
 
-        # smallest nonzero coefficient in any constraint is 1 (for your flow constraints)
-        min_coeff = 1  
+            # smallest nonzero coefficient in any constraint is 1 (for your flow constraints)
+            min_coeff = 1  
 
-        # safety factor
-        gamma = 1.2
+            # safety factor
+            gamma = 1.2
 
-        # capacity: worst violation = max PAX you could add illegally
-        max_PAX = max(pax.PAX for pax in PNR)
+            # capacity: worst violation = max PAX you could add illegally
+            max_PAX = max(pax.PAX for pax in PNR)
 
-        lagrange_9 = gamma * max_h / max_PAX
-        # for the ≤1 constraints, worst violation = 1 extra path
-        lagrange_10 = lagrange_11 = gamma * max_h / 1
-        # for equals, you could violate by 1 on both sides → double gain
-        lagrange_12 = lagrange_13 = gamma * 2*max_h / 1
+            lagrange_9 = gamma * max_h / max_PAX
+            # for the ≤1 constraints, worst violation = 1 extra path
+            lagrange_10 = lagrange_11 = gamma * max_h / 1
+            # for equals, you could violate by 1 on both sides → double gain
+            lagrange_12 = lagrange_13 = gamma * 2*max_h / 1
 
-        # now rebuild and solve
-        bqm = build_knapsack_bqm(PNR, paths, reward, alpha, src, dest,
-                                lagrange_9=lagrange_9,
-                                lagrange_10=lagrange_10,
-                                lagrange_11=lagrange_11,
-                                lagrange_12=lagrange_12,
-                                lagrange_13=lagrange_13)
+            # now rebuild and solve
+            bqm = build_knapsack_bqm(PNR, paths, reward, alpha, src, dest,
+                                    lagrange_9=lagrange_9,
+                                    lagrange_10=lagrange_10,
+                                    lagrange_11=lagrange_11,
+                                    lagrange_12=lagrange_12,
+                                    lagrange_13=lagrange_13)
         
+        else:
+            bqm = build_knapsack_bqm_from_cqm(PNR, paths, reward, alpha, src, dest)
+
         print("Submitting to simulated annealing solver")
         sampleset = sampler.sample(
             bqm, 

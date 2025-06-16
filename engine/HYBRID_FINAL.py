@@ -2,6 +2,7 @@ from pnr_reaccomodation import *
 from classical_pathfinding import * 
 import os
 
+METHOD = 'SIMULATE'
 moduleDir = os.path.dirname(os.path.abspath(__file__))
 def check_time_diff(flight_network, disrupted_flights):
     current_net = flight_network[flight_network['InventoryId'].isin(disrupted_flights)].copy()
@@ -74,7 +75,7 @@ def main(*disruptions_all, INVENTORY_FILE=os.path.join(moduleDir, "Files", "inv.
                 for j in range(len(paths[i])):
                     paths[i][j] = Flight(flight_network[flight_network["InventoryId"]==paths[i][j]][['FC_AvailableInventory', 'BC_AvailableInventory', 'PC_AvailableInventory', 'EC_AvailableInventory']], paths[i][j], flight_network[flight_network["InventoryId"]==paths[i][j]]['DepartureAirport'].iloc[0], flight_network[flight_network["InventoryId"]==paths[i][j]]['ArrivalAirport'].iloc[0])
             
-            sampleset =  reaccomodation(PNR, paths, scores, alpha, sources[disrupt], destinations[disrupt], impacted_pax[disrupt], disrupt, TOKEN)
+            sampleset =  reaccomodation(PNR, paths, scores, alpha, sources[disrupt], destinations[disrupt], impacted_pax[disrupt], disrupt, TOKEN, method=METHOD)
         
             if sampleset is not None and sampleset.first.energy<0:
                 default_path = os.path.join(moduleDir, "Solutions", f"Default_solution_{disrupt}.csv")
