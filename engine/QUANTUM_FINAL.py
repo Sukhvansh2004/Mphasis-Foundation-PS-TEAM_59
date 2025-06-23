@@ -521,7 +521,7 @@ def main(*disruptions, INVENTORY_FILE=os.path.join(moduleDir, "Files", "inv.csv"
         if total_flight_after_reduction > 0:
             # Initialize the Leap Hybrid CQM Sampler
             if method == 'SIMULATE':
-                bqm = cqm_to_bqm(cqm)[0]
+                bqm = cqm_to_bqm(cqm)[0] # Will only work for linear constraints for non linear use LeapHybridCQMSampler
                 sampler = SimulatedAnnealingSampler()
                 print("Submitting to simulated annealing solver")
                 result = sampler.sample(
@@ -530,6 +530,7 @@ def main(*disruptions, INVENTORY_FILE=os.path.join(moduleDir, "Files", "inv.csv"
                     # num_sweeps=num_sweeps,
                     # beta_range=beta_range
                 )
+                result = result.filter(lambda row: cqm.check_feasible(row.sample))  # Filter for feasible solutions
             else:
                 sampler = LeapHybridCQMSampler(token=TOKEN)
                 print("Submitting to Leap Hybrid CQM Sampler")
@@ -610,8 +611,8 @@ def main(*disruptions, INVENTORY_FILE=os.path.join(moduleDir, "Files", "inv.csv"
         sampleset = reaccomodation(PNR, paths, scores, alpha, src, dest, Passengers_flight_ungrouped, disrupt, TOKEN)
 
         if sampleset is not None and sampleset.first.energy<0:
-            df1 = pd.read_csv(f"Default_solution_{disrupt}.csv")
-            df2 = pd.read_csv(f"Exception_list_{disrupt}.csv")
+            df1 = pd.read_csv(os.path.join(moduleDir, "Solutions",f"Default_solution_{disrupt}.csv"))
+            df2 = pd.read_csv(os.path.join(moduleDir, "Solutions",f"Exception_list_{disrupt}.csv"))
 
             for i in range(len(df1)):
                 flight_id = df1["Flight ID"][i]
@@ -642,4 +643,4 @@ def main(*disruptions, INVENTORY_FILE=os.path.join(moduleDir, "Files", "inv.csv"
                     inventory_dataframe.loc[inventory_id_condition, "EC_AvailableInventory"] -= PNRs['PAX_CNT'].loc[PNR_ID]
 
 if __name__ == '__main__':
-    main("INV-ZZ-6584575", TOKEN='DEV-12b7e5b3bee7351638023f6bf954329397740cbe')
+    main("INV-ZZ-3174758", TOKEN='DEV-12b7e5b3bee7351638023f6bf954329397740cbe')

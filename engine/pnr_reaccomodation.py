@@ -6,10 +6,10 @@ from neal import SimulatedAnnealingSampler
 from dwave.system import LeapHybridCQMSampler
 import numpy as np
 import pandas as pd
+from collections import defaultdict
 import os
 import ast
 
-LANGRANGE = False  # Set to True if you want to use Lagrange multipliers for BQM
 moduleDir = os.path.dirname(os.path.abspath(__file__))
 #Defining a class Passenger for a particular PNR
 class Passenger:
@@ -159,129 +159,9 @@ def build_knapsack_cqm(PNR, paths, reward, alpha, src, dest):
     cqm.set_objective(obj)
     return cqm
 
-def build_knapsack_bqm(PNR, paths, reward, alpha, src, dest, **kwargs):
-    """Construct a bqm for the knapsack problem.
-
-    Args:
-        PNR (array-like):
-            Array of passengers as a objects.
-        paths :
-            Array of paths and a path is a array of flights as objects.
-        reward:
-            Dict of dict of passengers for a score of each class
-        alpha:
-            Score for each path
-
-    Returns:
-        Constrained quadratic model instance that represents the knapsack problem.
-    """
-    num_PNR = len(PNR)
-    
-    print(f"\nBuilding a BQM for {num_PNR} PNRs and {len(paths)} paths")
-
-    bqm = BinaryQuadraticModel(vartype='BINARY')
-    
-    flights = {}  #Dictionary keeping Track of flights and their corresponding paths
-    for c in range(len(paths)):
-        for flt in paths[c]:
-            if flt.ID not in flights:
-                    flights[flt.ID] = [flt,[c]]
-            else:
-                flights[flt.ID][1].append(c)
-    
-    for ID in flights:
-        for cls in flights[ID][0].classes:
-            constraint = QuadraticModel()
-            for passengers in PNR:
-                if reward[passengers.ID][cls] != 0:
-                    for c in flights[ID][1]:
-                        constraint.add_variable('BINARY', (c, ID, passengers.ID, cls))
-                        bqm.add_linear((c, ID, passengers.ID, cls), alpha[c]*( -reward[passengers.ID][cls]))
-                        constraint.set_linear((c, ID, passengers.ID, cls), passengers.PAX)
-                    #Capacity Constrainst of a class in a particular flight
-            bqm.add_linear_inequality_constraint(get_iterable(constraint), lagrange_multiplier=kwargs.get('lagrange_9'), lb=0, ub=flights[ID][0].classes[cls], label=f'Capacity of class {cls} in {ID}')
-
-    
-    for passengers in PNR:
-        # Summation of outgoing and incoming flights from src and dest respectively for a particular passenger in all classes is less than equal to 1
-        constraint1 = QuadraticModel()
-        constraint2 = QuadraticModel()
-        for ID in flights:
-            if flights[ID][0].src in src:
-                for cls in flights[ID][0].classes:
-                    if reward[passengers.ID][cls] != 0: 
-                        for c in flights[ID][1]: 
-                            constraint1.add_variable('BINARY', (c, ID, passengers.ID, cls))
-                            constraint1.set_linear((c, ID, passengers.ID, cls), 1)
-            if flights[ID][0].dest in dest:
-                for cls in flights[ID][0].classes:
-                    if reward[passengers.ID][cls] != 0: 
-                        for c in flights[ID][1]: 
-                            constraint2.add_variable('BINARY', (c, ID, passengers.ID, cls))
-                            constraint2.set_linear((c, ID, passengers.ID, cls), 1)
-                            
-        bqm.add_linear_inequality_constraint(get_iterable(constraint1), lagrange_multiplier=kwargs.get('lagrange_10'), lb=0, ub=1, label = f"Outgoing Flights from src for passenger {passengers.ID}")
-        bqm.add_linear_inequality_constraint(get_iterable(constraint2), lagrange_multiplier=kwargs.get('lagrange_11'), lb=0, ub=1, label = f"Incoming Flights to dest for passenger {passengers.ID}")
-    
-    airports = {} #Dictionary Keeping track of Flights incoming and outgoing at a particular airport for a particular path
-    for flight in flights:
-        if flights[flight][0].src not in airports:
-            incoming = [flight]
-            outcoming = []
-            airports[flights[flight][0].src] = (incoming, outcoming)
-        else:
-            airports[flights[flight][0].src][0].append(flight)
-            
-        if flights[flight][0].dest not in airports:
-            incoming = []
-            outcoming = [flight]
-            airports[flights[flight][0].dest] = (incoming, outcoming)
-        else:
-            airports[flights[flight][0].dest][1].append(flight)
-    
-    for passengers in PNR: #Summation of a path is equal to its length if started on
-        for c in range(len(paths)):
-            constraint = QuadraticModel()
-            for flt in range(1,len(paths[c])):
-                flight = paths[c][flt]
-                for cls in flight.classes:
-                    if reward[passengers.ID][cls] != 0:
-                        constraint.add_variable('BINARY', (c, flight.ID, passengers.ID, cls))
-                        constraint.set_linear((c, flight.ID, passengers.ID, cls), 1)
-            
-            for cls in paths[c][0].classes:
-                flight = paths[c][0]
-                if reward[passengers.ID][cls] != 0:
-                        constraint.add_variable('BINARY', (c, flight.ID, passengers.ID, cls))
-                        constraint.set_linear((c, flight.ID, passengers.ID, cls), -(len(paths[c])-1))
-                        
-            bqm.add_linear_equality_constraint(get_iterable(constraint), lagrange_multiplier=kwargs.get('lagrange_12'), constant=0) #, label = f'Path Preservance of {passengers.ID} for {c} path')
-                
-    for passengers in PNR:
-        #Summation of the incoming flights at a airport for a passenger is than equal to the summation of outgoing flights (Path Preservence)
-        for station in airports:
-            if station not in src and station not in dest:
-                constraint = QuadraticModel()
-                for flt in airports[station][0]:
-                    for cls in flights[flt][0].classes:
-                        if reward[passengers.ID][cls] != 0: 
-                            for c in flights[flt][1]:
-                                constraint.add_variable('BINARY', (c, flt, passengers.ID, cls))
-                                constraint.set_linear((c, flt, passengers.ID, cls), 1)
-                                
-                for flt in airports[station][1]:
-                    for cls in flights[flt][0].classes:
-                        if reward[passengers.ID][cls] != 0: 
-                            for c in flights[flt][1]:
-                                constraint.add_variable('BINARY', (c, flt, passengers.ID, cls))
-                                constraint.set_linear((c, flt, passengers.ID, cls), -1)
-                                
-                bqm.add_linear_equality_constraint(get_iterable(constraint), lagrange_multiplier=kwargs.get('lagrange_13'), constant=0) #, label = f'Path Preservance of {passengers.ID} at airport {station}')
-        
-    return bqm
-
 def build_knapsack_bqm_from_cqm(PNR, paths, reward, alpha, src, dest):
-    return cqm_to_bqm(build_knapsack_cqm(PNR, paths, reward, alpha, src, dest))[0]
+    cqm = build_knapsack_cqm(PNR, paths, reward, alpha, src, dest)
+    return cqm, cqm_to_bqm(cqm)[0]
 
 def get_iterable(qm: QuadraticModel):
     ret = []
@@ -303,11 +183,8 @@ def parse_solution_cqm(sampleset: dimod.SampleSet, passenger_flights, disrupt, a
         print("No feasible solution found")
         return None
 
-    # Find the minimum energy
-    min_energy = min(sampleset.data_vectors['energy'])
-
-    # Collect all samples with the minimum energy
-    min_energy_samples = [sample for sample, energy in zip(sampleset.samples(), sampleset.data_vectors['energy']) if energy == min_energy]
+    min_energy = min(feasible_sampleset.data_vectors['energy'])
+    min_energy_samples = [sample for sample, energy in zip(feasible_sampleset.samples(), feasible_sampleset.data_vectors['energy']) if energy == min_energy]
 
     #Converting normalised alpha to abs_alpha
     for i in range(len(abs_alpha)):
@@ -398,26 +275,25 @@ def parse_solution_cqm(sampleset: dimod.SampleSet, passenger_flights, disrupt, a
         
     return feasible_sampleset
 
-def parse_solution_bqm(sampleset: dimod.SampleSet, passenger_flights, disrupt, abs_alpha, scores, paths):
+def parse_solution_bqm(sampleset: dimod.SampleSet, passenger_flights, disrupt, abs_alpha, scores, paths, cqm):
     """Translate the sampler sample returned from solver to shipped items for BQM solver."""
     # Attempt filter feasible samples
     try:
         feasible_sampleset = sampleset.filter(lambda row: row.is_feasible)
     except Exception:
-        feasible_sampleset = sampleset
+        feasible_sampleset = sampleset.filter(lambda row: cqm.check_feasible(row.sample))
 
     if not len(feasible_sampleset):
         print("No feasible solution found")
         return None
 
     # Extract energies safely without ambiguous truth checks
-    if 'energy' in sampleset.data_vectors:
-        energies = list(sampleset.data_vectors['energy'])
-    else:
-        energies = [s.energy for s in sampleset]
+    energies = list(feasible_sampleset.data_vectors['energy']) \
+    if 'energy' in feasible_sampleset.data_vectors else \
+    [s.energy for s in feasible_sampleset]
 
     min_energy = min(energies)
-    min_energy_samples = [sample for sample, energy in zip(sampleset.samples(), energies) if energy == min_energy]
+    min_energy_samples = [sample for sample, energy in zip(feasible_sampleset.samples(), energies) if energy == min_energy]
 
     # Convert normalized alpha to absolute
     for i in range(len(abs_alpha)):
@@ -524,38 +400,7 @@ def reaccomodation(PNR, paths, reward, alpha, src, dest, passenger_flights, disr
     else:
         sampler = SimulatedAnnealingSampler()
 
-        if LANGRANGE:
-            bqm = build_knapsack_bqm(PNR, paths, reward, alpha, src, dest,
-                                    lagrange_9=0, lagrange_10=0,
-                                    lagrange_11=0, lagrange_12=0, lagrange_13=0)
-
-            max_h = max(abs(v) for v in bqm.linear.values())
-
-            # smallest nonzero coefficient in any constraint is 1 (for your flow constraints)
-            min_coeff = 1  
-
-            # safety factor
-            gamma = 1.2
-
-            # capacity: worst violation = max PAX you could add illegally
-            max_PAX = max(pax.PAX for pax in PNR)
-
-            lagrange_9 = gamma * max_h / max_PAX
-            # for the ≤1 constraints, worst violation = 1 extra path
-            lagrange_10 = lagrange_11 = gamma * max_h / 1
-            # for equals, you could violate by 1 on both sides → double gain
-            lagrange_12 = lagrange_13 = gamma * 2*max_h / 1
-
-            # now rebuild and solve
-            bqm = build_knapsack_bqm(PNR, paths, reward, alpha, src, dest,
-                                    lagrange_9=lagrange_9,
-                                    lagrange_10=lagrange_10,
-                                    lagrange_11=lagrange_11,
-                                    lagrange_12=lagrange_12,
-                                    lagrange_13=lagrange_13)
-        
-        else:
-            bqm = build_knapsack_bqm_from_cqm(PNR, paths, reward, alpha, src, dest)
+        cqm, bqm = build_knapsack_bqm_from_cqm(PNR, paths, reward, alpha, src, dest)
 
         print("Submitting to simulated annealing solver")
         sampleset = sampler.sample(
@@ -565,4 +410,4 @@ def reaccomodation(PNR, paths, reward, alpha, src, dest, passenger_flights, disr
             # beta_range=beta_range
         )
 
-        return parse_solution_bqm(sampleset, passenger_flights, disrupt, alpha, reward, paths)
+        return parse_solution_bqm(sampleset, passenger_flights, disrupt, alpha, reward, paths, cqm)
