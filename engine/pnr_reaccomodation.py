@@ -104,18 +104,14 @@ def build_knapsack_cqm(PNR, paths, reward, alpha, src, dest):
     airports = {} #Dictionary Keeping track of Flights incoming and outgoing at a particular airport for a particular path
     for flight in flights:
         if flights[flight][0].src not in airports:
-            incoming = [flight]
-            outcoming = []
-            airports[flights[flight][0].src] = (incoming, outcoming)
+            airports[flights[flight][0].src] = ([], [flight])
         else:
-            airports[flights[flight][0].src][0].append(flight)
+            airports[flights[flight][0].src][1].append(flight)
             
         if flights[flight][0].dest not in airports:
-            incoming = []
-            outcoming = [flight]
-            airports[flights[flight][0].dest] = (incoming, outcoming)
+            airports[flights[flight][0].dest] = ([flight], [])
         else:
-            airports[flights[flight][0].dest][1].append(flight)
+            airports[flights[flight][0].dest][0].append(flight)
     
     for passengers in PNR: #Summation of a path is equal to its length if started on
         for c in range(len(paths)):
@@ -136,7 +132,7 @@ def build_knapsack_cqm(PNR, paths, reward, alpha, src, dest):
             cqm.add_constraint(constraint, sense = "==", rhs=0, label = f'Path Preservance of {passengers.ID} for {c} path')
                 
     for passengers in PNR:
-        #Summation of the incoming flights at a airport for a passenger is than equal to the summation of outgoing flights (Path Preservence)
+        #Summation of the incoming flights at an intermediate airport for a passenger is than equal to the summation of outgoing flights (Path Preservence)
         for station in airports:
             if station not in src and station not in dest:
                 constraint = QuadraticModel()
@@ -170,7 +166,7 @@ def get_iterable(qm: QuadraticModel):
     return ret
 
 # FUNCTION TO PARSE THE SOLUTION OF PASSENGER REACCOMODATION AND STORING RESULTS IN CSV FILE
-def parse_solution_cqm(sampleset: dimod.SampleSet, passenger_flights, disrupt, abs_alpha, scores, paths):
+def parse_solution_cqm(sampleset: dimod.SampleSet, passenger_flights, disrupt, abs_alpha_, scores, paths):
     """Translate the sampler sample returned from solver to shipped items.
 
     Args:
@@ -187,8 +183,8 @@ def parse_solution_cqm(sampleset: dimod.SampleSet, passenger_flights, disrupt, a
     min_energy_samples = [sample for sample, energy in zip(feasible_sampleset.samples(), feasible_sampleset.data_vectors['energy']) if energy == min_energy]
 
     #Converting normalised alpha to abs_alpha
-    for i in range(len(abs_alpha)):
-        abs_alpha[i] = abs_alpha[i] * (len(paths[i])**2)
+    abs_alpha = [a * (len(p)**2) for a, p in zip(abs_alpha_, paths)]
+
 
     dataframes = []
     for sampler in min_energy_samples:  #Sampling samples with same energy
@@ -275,7 +271,7 @@ def parse_solution_cqm(sampleset: dimod.SampleSet, passenger_flights, disrupt, a
         
     return feasible_sampleset
 
-def parse_solution_bqm(sampleset: dimod.SampleSet, passenger_flights, disrupt, abs_alpha, scores, paths, cqm):
+def parse_solution_bqm(sampleset: dimod.SampleSet, passenger_flights, disrupt, abs_alpha_, scores, paths, cqm):
     """Translate the sampler sample returned from solver to shipped items for BQM solver."""
     # Attempt filter feasible samples
     try:
@@ -296,8 +292,7 @@ def parse_solution_bqm(sampleset: dimod.SampleSet, passenger_flights, disrupt, a
     min_energy_samples = [sample for sample, energy in zip(feasible_sampleset.samples(), energies) if energy == min_energy]
 
     # Convert normalized alpha to absolute
-    for i in range(len(abs_alpha)):
-        abs_alpha[i] = abs_alpha[i] * (len(paths[i]) ** 2)
+    abs_alpha = [a * (len(p)**2) for a, p in zip(abs_alpha_, paths)]
 
     dataframes = []
     for sample in min_energy_samples:
