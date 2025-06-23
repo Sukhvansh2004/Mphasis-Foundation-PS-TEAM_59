@@ -270,7 +270,7 @@ def main(*disruptions, INVENTORY_FILE=os.path.join(moduleDir, "Files", "inv.csv"
             E_prime_d=df_nearby_airports['IATA'].tolist()
             # print(E_prime_d)
         else:
-            print(f"Airport with IATA code '{reference_airport_iata}' not found in the database.")
+            raise AssertionError(f"Airport with IATA code '{reference_airport_iata}' not found in the database.")
 
         """NOW THE VARIABLE E_prime CONTAINS IATA CODE FOR POSSIBLE DESTINATIONS AND THE VARIABLE E_prime_d CONTAINS IATA CODE FOR POSSIBLE DEPARTURE AIRPORTS NEARBY THE ORIGINAL DEPARTURE AIRPORT"""
 
@@ -540,11 +540,17 @@ def main(*disruptions, INVENTORY_FILE=os.path.join(moduleDir, "Files", "inv.csv"
             try:
                 unique_solutions = {}
                 for sample, energy, num_occurrences in result.data(['sample', 'energy', 'num_occurrences']):
-                    # Create a hashable representation of the sample
-                    sample_repr = tuple(sorted((str(k), v) for k, v in sample.items()))
+                    # 1) Keep only the real variables
+                    real_sample = {k: v for k, v in sample.items() 
+                                if not str(k).startswith('slack_')}
+
+                    # 2) Build a hashable representation of exactly those 4 variables
+                    sample_repr = tuple(sorted(real_sample.items()))
+
+                    # 3) Store only unique reps
                     if sample_repr not in unique_solutions:
                         unique_solutions[sample_repr] = (energy, num_occurrences)
-
+                        
             # Sort unique solutions by the number of occurrences (descending)
                 sorted_unique_solutions = sorted(unique_solutions.items(), key=lambda x: x[1][1], reverse=True)
 
@@ -643,4 +649,4 @@ def main(*disruptions, INVENTORY_FILE=os.path.join(moduleDir, "Files", "inv.csv"
                     inventory_dataframe.loc[inventory_id_condition, "EC_AvailableInventory"] -= PNRs['PAX_CNT'].loc[PNR_ID]
 
 if __name__ == '__main__':
-    main("INV-ZZ-3174758", TOKEN='DEV-12b7e5b3bee7351638023f6bf954329397740cbe')
+    main("INV-ZZ-1409214", TOKEN='DEV-12b7e5b3bee7351638023f6bf954329397740cbe')

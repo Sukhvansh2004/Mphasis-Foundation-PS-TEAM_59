@@ -300,22 +300,27 @@ def parse_solution_bqm(sampleset: dimod.SampleSet, passenger_flights, disrupt, a
         abs_alpha[i] = abs_alpha[i] * (len(paths[i]) ** 2)
 
     dataframes = []
-    for sampler in min_energy_samples:
+    for sample in min_energy_samples:
         arr = []
-        for var, val in sampler.items():
+        for var, val in sample.items():
             if val != 1:
                 continue
-            # only consider original four‑tuple variables, not slack vars
+
+            # 1) Skip any slack variable by prefix
+            if isinstance(var, str) and var.startswith('slack_'):
+                continue
+
+            # 2) Now only tuple-like vars remain:
             if isinstance(var, tuple):
                 tup = var
-            elif isinstance(var, str) and var.startswith("("):
+            else:
+                # maybe a tuple serialized as string?
                 try:
                     tup = ast.literal_eval(var)
+                    if not isinstance(tup, tuple):
+                        continue
                 except (SyntaxError, ValueError):
                     continue
-            else:
-                # skip slack_... or any other labels
-                continue
 
             # ensure it's exactly our (path,flight,pnr,cls) tuple
             if isinstance(tup, tuple) and len(tup) == 4:
