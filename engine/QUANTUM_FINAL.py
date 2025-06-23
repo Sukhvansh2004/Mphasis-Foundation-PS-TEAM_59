@@ -614,11 +614,11 @@ def main(*disruptions, INVENTORY_FILE=os.path.join(moduleDir, "Files", "inv.csv"
 
         src=cancelled_flight_departure_airport
         dest=cancelled_flight_arrival_airport
-        sampleset = reaccomodation(PNR, paths, scores, alpha, src, dest, Passengers_flight_ungrouped, disrupt, TOKEN)
+        sampleset = reaccomodation(PNR, paths, scores, alpha, src, dest, Passengers_flight_ungrouped, disrupt, TOKEN, "Quantum", method=method)
 
         if sampleset is not None and sampleset.first.energy<0:
-            df1 = pd.read_csv(os.path.join(moduleDir, "Solutions",f"Default_solution_{disrupt}.csv"))
-            df2 = pd.read_csv(os.path.join(moduleDir, "Solutions",f"Exception_list_{disrupt}.csv"))
+            df1 = pd.read_csv(os.path.join(moduleDir, "Solutions", "Quantum", f"Default_solution_{disrupt}.csv"))
+            df2 = pd.read_csv(os.path.join(moduleDir, "Solutions", "Quantum", f"Exception_list_{disrupt}.csv"))
 
             for i in range(len(df1)):
                 flight_id = df1["Flight ID"][i]
@@ -648,5 +648,78 @@ def main(*disruptions, INVENTORY_FILE=os.path.join(moduleDir, "Files", "inv.csv"
                 else:
                     inventory_dataframe.loc[inventory_id_condition, "EC_AvailableInventory"] -= PNRs['PAX_CNT'].loc[PNR_ID]
 
+# if __name__ == '__main__':
+#     main("INV-ZZ-1409214", TOKEN='DEV-12b7e5b3bee7351638023f6bf954329397740cbe')
+
 if __name__ == '__main__':
-    main("INV-ZZ-1409214", TOKEN='DEV-12b7e5b3bee7351638023f6bf954329397740cbe')
+    import random
+    import time
+    INVENTORY_FILE = os.path.join(moduleDir, "Files", "inv.csv")
+    flight_network = pd.read_csv(INVENTORY_FILE)
+    inventory_ids = flight_network['InventoryId'].tolist()
+    
+    num_sims = 150
+    results_df = pd.DataFrame(columns=[
+        'Simulation', 'Disruption', 'Num_Default_PNRs',
+        'Num_Exception_NonNull_PNRs', 'Num_Exception_Null_PNRs',
+        'Total_PNRs', 'Percentage_Default',
+        'Percentage_Exception_NonNull', 'Percentage_Exception_Null',
+        'Percentage_Solved', 'Time_Taken'
+    ])
+    results_path = os.path.join(moduleDir, "Simulation_Results_Quantum.csv")
+    for i, disruption in enumerate(inventory_ids):
+        try:
+            start = time.time()
+            main(disruption, TOKEN='DEV-12b7e5b3bee7351638023f6bf954329397740cbe')
+            end = time.time()
+            print(f"Time taken for simulation {i+1}: {end - start:.2f} seconds")
+
+            solution_path = os.path.join(moduleDir, "Solutions", "Quantum", f"Default_solution_{disruption}.csv")
+            exception_path = os.path.join(moduleDir, "Solutions", "Quantum", f"Exception_list_{disruption}.csv")
+            
+            default_solutions = pd.read_csv(solution_path)        
+            exception_pnrs = pd.read_csv(exception_path)
+            
+            num_default_pnrs = default_solutions['PNR ID'].nunique()
+            num_exception_pnrs = exception_pnrs[exception_pnrs['Path'].notnull()]['PNR ID'].nunique()
+            num_null_exception_pnrs = exception_pnrs[exception_pnrs['Path'].isnull()]['PNR ID'].nunique()
+            total_pnrs = num_default_pnrs + num_exception_pnrs + num_null_exception_pnrs
+            percentage_default = (num_default_pnrs / total_pnrs) * 100 if total_pnrs > 0 else 0
+            percentage_exception = (num_exception_pnrs / total_pnrs) * 100 if total_pnrs > 0 else 0
+            percentage_null_exception = (num_null_exception_pnrs / total_pnrs) * 100 if total_pnrs > 0 else 0
+            percentage_solved = (num_default_pnrs + num_exception_pnrs) / total_pnrs * 100 if total_pnrs > 0 else 0
+
+            new_row = pd.DataFrame([{
+                'Simulation': i + 1,
+                'Disruption': disruption,
+                'Num_Default_PNRs': num_default_pnrs,
+                'Num_Exception_NonNull_PNRs': num_exception_pnrs,
+                'Num_Exception_Null_PNRs': num_null_exception_pnrs,
+                'Total_PNRs': total_pnrs,
+                'Percentage_Default': percentage_default,
+                'Percentage_Exception_NonNull': percentage_exception,
+                'Percentage_Exception_Null': percentage_null_exception,
+                'Percentage_Solved': percentage_solved,
+                "Time_Taken": end - start
+            }])
+            results_df = pd.concat([results_df, new_row], ignore_index=True)
+            # Save after each simulation
+            results_df.to_csv(results_path, index=False)
+
+            print(f"Simulation {i+1}:")
+            print(f"  Disruption: {disruption}")
+            print(f"  Number of PNRs in Default Solution: {num_default_pnrs}")
+            print(f"  Number of PNRs in Exception List with Non Null Path: {num_exception_pnrs}")
+            print(f"  Number of PNRs in Exception List with Null Path: {num_null_exception_pnrs}")
+            print(f"  Total PNRs: {total_pnrs}")
+            print(f"  Percentage of PNRs assigned to Default Solution: {percentage_default:.2f}%")
+            print(f"  Percentage of PNRs assigned to Exception List with Non Null Path: {percentage_exception:.2f}%")
+            print(f"  Percentage of PNRs assigned to Exception List with Null Path: {percentage_null_exception:.2f}%")
+            print(f"  Percentage of PNRs solved (Default + Exception): {percentage_solved:.2f}%")
+            print(f"  Time taken: {end - start:.2f} seconds")
+            print("-" * 40)
+        except Exception as e:
+            print(f"An error occurred during simulation {i+1}: {e}")
+            continue
+
+    print("Simulation results saved to 'Simulation_Results_Quantum.csv'.")

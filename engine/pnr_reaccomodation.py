@@ -166,7 +166,7 @@ def get_iterable(qm: QuadraticModel):
     return ret
 
 # FUNCTION TO PARSE THE SOLUTION OF PASSENGER REACCOMODATION AND STORING RESULTS IN CSV FILE
-def parse_solution_cqm(sampleset: dimod.SampleSet, passenger_flights, disrupt, abs_alpha_, scores, paths):
+def parse_solution_cqm(sampleset: dimod.SampleSet, passenger_flights, disrupt, abs_alpha_, scores, paths, folder):
     """Translate the sampler sample returned from solver to shipped items.
 
     Args:
@@ -262,8 +262,8 @@ def parse_solution_cqm(sampleset: dimod.SampleSet, passenger_flights, disrupt, a
         dataframes = subframes  #Most aprropriate solution
     
     if len(dataframes) != 0: 
-        dataframes[0][0].to_csv(os.path.join(moduleDir, "Solutions", f"Default_solution_{disrupt}.csv"))
-        dataframes[0][1].to_csv(os.path.join(moduleDir, "Solutions", f"Exception_list_{disrupt}.csv"))
+        dataframes[0][0].to_csv(os.path.join(moduleDir, "Solutions", folder, f"Default_solution_{disrupt}.csv"))
+        dataframes[0][1].to_csv(os.path.join(moduleDir, "Solutions", folder, f"Exception_list_{disrupt}.csv"))
         
         print('Accomodations done, check the default and the exception files')
     else:
@@ -271,7 +271,7 @@ def parse_solution_cqm(sampleset: dimod.SampleSet, passenger_flights, disrupt, a
         
     return feasible_sampleset
 
-def parse_solution_bqm(sampleset: dimod.SampleSet, passenger_flights, disrupt, abs_alpha_, scores, paths, cqm):
+def parse_solution_bqm(sampleset: dimod.SampleSet, passenger_flights, disrupt, abs_alpha_, scores, paths, cqm, folder):
     """Translate the sampler sample returned from solver to shipped items for BQM solver."""
     # Attempt filter feasible samples
     try:
@@ -376,8 +376,8 @@ def parse_solution_bqm(sampleset: dimod.SampleSet, passenger_flights, disrupt, a
     # Write CSV outputs
     if dataframes:
         default_df, exception_df = dataframes[0]
-        default_df.to_csv(os.path.join(moduleDir, "Solutions", f"Default_solution_{disrupt}.csv"), index=False)
-        exception_df.to_csv(os.path.join(moduleDir, "Solutions", f"Exception_list_{disrupt}.csv"), index=False)
+        default_df.to_csv(os.path.join(moduleDir, "Solutions", folder, f"Default_solution_{disrupt}.csv"), index=False)
+        exception_df.to_csv(os.path.join(moduleDir, "Solutions", folder, f"Exception_list_{disrupt}.csv"), index=False)
         print('Accommodations done, check the default and the exception files')
     else:
         print("No accommodations available")
@@ -385,7 +385,7 @@ def parse_solution_bqm(sampleset: dimod.SampleSet, passenger_flights, disrupt, a
     return feasible_sampleset
 
 #FUNCTION TO SOLVE THE KNAPSACK PROBLEM AND GIVE AN OUTPUT AS CSV FILES
-def reaccomodation(PNR, paths, reward, alpha, src, dest, passenger_flights, disrupt, TOKEN, method='SIMULATE'):
+def reaccomodation(PNR, paths, reward, alpha, src, dest, passenger_flights, disrupt, TOKEN, folder, method='SIMULATE'):
     """Solve a knapsack problem using a CQM solver."""
 
     if method != 'SIMULATE':
@@ -395,7 +395,7 @@ def reaccomodation(PNR, paths, reward, alpha, src, dest, passenger_flights, disr
         print("Submitting CQM to solver {}.".format(sampler.solver.name))
         sampleset = sampler.sample_cqm(cqm, label='Multi-Knapsack')
 
-        return parse_solution_cqm(sampleset, passenger_flights, disrupt, alpha, reward, paths)
+        return parse_solution_cqm(sampleset, passenger_flights, disrupt, alpha, reward, paths, folder)
 
     else:
         sampler = SimulatedAnnealingSampler()
@@ -410,4 +410,4 @@ def reaccomodation(PNR, paths, reward, alpha, src, dest, passenger_flights, disr
             # beta_range=beta_range
         )
 
-        return parse_solution_bqm(sampleset, passenger_flights, disrupt, alpha, reward, paths, cqm)
+        return parse_solution_bqm(sampleset, passenger_flights, disrupt, alpha, reward, paths, cqm, folder)
