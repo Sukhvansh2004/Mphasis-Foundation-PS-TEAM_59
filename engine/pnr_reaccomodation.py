@@ -2,7 +2,7 @@ import dimod
 from dimod import ConstrainedQuadraticModel, BinaryQuadraticModel, QuadraticModel
 import dimod.sampleset
 from dimod.constrained import cqm_to_bqm
-from dimod import SimulatedAnnealingSampler
+from neal import SimulatedAnnealingSampler
 from dwave.system import LeapHybridCQMSampler
 import numpy as np
 import pandas as pd
@@ -405,7 +405,7 @@ def reaccomodation(PNR, paths, reward, alpha, src, dest, passenger_flights, disr
         print("Submitting to simulated annealing solver")
         sampleset = sampler.sample(
             bqm, 
-            num_reads=15, 
+            num_reads=1000, 
             # num_sweeps=num_sweeps,
             # beta_range=beta_range
         )
