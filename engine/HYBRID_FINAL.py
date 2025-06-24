@@ -88,13 +88,14 @@ def main(*disruptions_all, INVENTORY_FILE=os.path.join(moduleDir, "Files", "inv.
                 for i in range(len(df1)):
                     flight_id = df1["Flight ID"][i]
                     PNR_ID = df1["PNR ID"][i]
+                    passenger_class = df1["Class"][i]
                     inventory_id_condition = flight_network["InventoryId"] == flight_id
 
-                    if flight_id == 'BC':
+                    if passenger_class == 'BC':
                         flight_network.loc[inventory_id_condition, "BC_AvailableInventory"] -= Passengers_flight['PAX_CNT'].loc[PNR_ID]
-                    elif flight_id == 'FC':
+                    elif passenger_class == 'FC':
                         flight_network.loc[inventory_id_condition, "FC_AvailableInventory"] -= Passengers_flight['PAX_CNT'].loc[PNR_ID]
-                    elif flight_id == 'PC':
+                    elif passenger_class == 'PC':
                         flight_network.loc[inventory_id_condition, "PC_AvailableInventory"] -= Passengers_flight['PAX_CNT'].loc[PNR_ID]
                     else:
                         flight_network.loc[inventory_id_condition, "EC_AvailableInventory"] -= Passengers_flight['PAX_CNT'].loc[PNR_ID]
@@ -102,13 +103,14 @@ def main(*disruptions_all, INVENTORY_FILE=os.path.join(moduleDir, "Files", "inv.
                 for i in range(len(df2)):
                     flight_id = df2["Flight ID"][i]  
                     PNR_ID = df2["PNR ID"][i]
+                    passenger_class = df2["Class"][i]
                     inventory_id_condition = flight_network["InventoryId"] == flight_id
 
-                    if flight_id == 'BC':
+                    if passenger_class == 'BC':
                         flight_network.loc[inventory_id_condition, "BC_AvailableInventory"] -= Passengers_flight['PAX_CNT'].loc[PNR_ID]
-                    elif flight_id == 'FC':
+                    elif passenger_class == 'FC':
                         flight_network.loc[inventory_id_condition, "FC_AvailableInventory"] -= Passengers_flight['PAX_CNT'].loc[PNR_ID]
-                    elif flight_id == 'PC':
+                    elif passenger_class == 'PC':
                         flight_network.loc[inventory_id_condition, "PC_AvailableInventory"] -= Passengers_flight['PAX_CNT'].loc[PNR_ID]
                     else:
                         flight_network.loc[inventory_id_condition, "EC_AvailableInventory"] -= Passengers_flight['PAX_CNT'].loc[PNR_ID]

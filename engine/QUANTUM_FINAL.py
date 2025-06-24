@@ -51,80 +51,57 @@ def get_direct_flights(E_prime_d, E_prime, dataframe):
 
     return filtered_flights
 
-def get_1_interconnecting(E_prime_d, E_prime, flights_dataframe):
-    all_solutions = []
-
-    # Iterate over each departure airport in E_prime_d
-    for departure_airport in E_prime_d:
-        # Filter flights departing from the current departure airport
-        a_flights = flights_dataframe[flights_dataframe["DepartureAirport"] == departure_airport]
-
-        # Iterate over each arrival airport in E_prime
-        for arrival_airport in E_prime:
-            # Filter flights arriving at the current arrival airport
-            b_flights = flights_dataframe[flights_dataframe["ArrivalAirport"] == arrival_airport]
-            b_airports_set = set(b_flights["DepartureAirport"])
-
-            # Find connecting flights for the current arrival airport
-            solution = []
+def get_1_interconnecting(E_prime_d, E_prime, flights_df):
+    solutions = []
+    # for each possible start and end
+    for dep in E_prime_d:
+        a_flights = flights_df[flights_df["DepartureAirport"] == dep]
+        for arr in E_prime:
+            b_flights = flights_df[flights_df["ArrivalAirport"] == arr]
+            # look for any a->X and X->b
             for _, a_row in a_flights.iterrows():
-                if a_row["ArrivalAirport"] in b_airports_set:
-                    b_row = b_flights[b_flights["DepartureAirport"] == a_row["ArrivalAirport"]].iloc[0]
-                    solution.append(a_row)
-                    solution.append(b_row)
+                mid = a_row["ArrivalAirport"]
+                # all B’s that depart from that mid-point
+                matches = b_flights[b_flights["DepartureAirport"] == mid]
+                for _, b_row in matches.iterrows():
+                    # build a 2-row DataFrame
+                    sol = pd.DataFrame([a_row, b_row])
+                    solutions.append(sol)
 
-            # Add the solution for the current arrival airport to all solutions
-            if solution:
-                result_df = pd.concat(solution, axis=1).transpose().reset_index(drop=True)
-                all_solutions.append(result_df)
-
-    # Combine all solutions into a single DataFrame
-    if all_solutions:
-        return pd.concat(all_solutions, ignore_index=True)
+    if solutions:
+        return pd.concat(solutions, ignore_index=True)
     else:
-        return pd.DataFrame()
+        # empty with same columns
+        return flights_df.iloc[0:0].copy()
 
-def get_2_interconnecting(E_prime_d, E_prime, flights_dataframe):
-    # Initialize an empty list to store all solutions
-    all_solutions = []
-
-    # Iterate over each departure airport in E_prime_d
-    for departure_airport in E_prime_d:
-        # Filter flights departing from the current departure airport
-        a_flights = flights_dataframe[flights_dataframe["DepartureAirport"] == departure_airport]
-
-        # Iterate over each arrival airport in E_prime
-        for arrival_airport in E_prime:
-            # Filter flights arriving at the current arrival airport
-            b_flights = flights_dataframe[flights_dataframe["ArrivalAirport"] == arrival_airport]
-
-            # Initialize a list to store solutions for the current arrival airport
-            solution = []
-
-            for i in range(len(a_flights)):
-                for j in range(len(b_flights)):
-                    # Ensure that the connecting airport is neither the departure nor the arrival airport
-                    connecting_flights = flights_dataframe[
-                        (flights_dataframe["DepartureAirport"] == a_flights["ArrivalAirport"].iloc[i]) &
-                        (flights_dataframe["ArrivalAirport"] == b_flights["DepartureAirport"].iloc[j]) &
-                        (flights_dataframe["DepartureAirport"] != departure_airport) &
-                        (flights_dataframe["ArrivalAirport"] != arrival_airport)
+def get_2_interconnecting(E_prime_d, E_prime, flights_df):
+    solutions = []
+    for dep in E_prime_d:
+        a_flights = flights_df[flights_df["DepartureAirport"] == dep]
+        for arr in E_prime:
+            b_flights = flights_df[flights_df["ArrivalAirport"] == arr]
+            # for every a-leg and b-leg, see if there’s an actual connecting c-leg
+            for _, a_row in a_flights.iterrows():
+                for _, b_row in b_flights.iterrows():
+                    mid1 = a_row["ArrivalAirport"]
+                    mid2 = b_row["DepartureAirport"]
+                    # we want a_row.dep -> mid1, then mid1->mid2, then mid2->b_row.arr
+                    c_matches = flights_df[
+                        (flights_df["DepartureAirport"] == mid1) &
+                        (flights_df["ArrivalAirport"] == mid2) &
+                        (flights_df["DepartureAirport"] != dep) &
+                        (flights_df["ArrivalAirport"] != arr)
                     ]
+                    for _, c_row in c_matches.iterrows():
+                        # build a 3-row DataFrame
+                        sol = pd.DataFrame([a_row, c_row, b_row])
+                        solutions.append(sol)
 
-                    if len(connecting_flights) > 0:
-                        # Append the connecting flight and the two segments to the solution
-                        solution.extend([connecting_flights.iloc[0], a_flights.iloc[i], b_flights.iloc[j]])
-
-            # Add the solution for the current arrival airport to all solutions
-            if solution:
-                result_df = pd.DataFrame(solution)
-                all_solutions.append(result_df)
-
-    # Combine all solutions into a single DataFrame
-    if all_solutions:
-        return pd.concat(all_solutions, ignore_index=True)
+    if solutions:
+        return pd.concat(solutions, ignore_index=True)
     else:
-        return pd.DataFrame()
+        return flights_df.iloc[0:0].copy()
+
 
 """NOW WE HAVE DEFINED THE BINARY VARIABLES OF THE FORM 'Q_ikjl' THAT REPRESENTS WHETHER WE SELECT A FLIGHT IN OUR PATH OR NOT. HERE THE FIRST INDEX REPRESENTS THE START NODE OF OUR FLIGHT, THE SECOND INDEX REPRESENTS THE END NODE, THE THIRD INDEX REPRESENTS AIRCRAFT ID AND THE FOURTH INDEX REPRESENTS THE DEPARTURE TIME.WE HAVE ENCODED THE POSSIBLE VALUES FOR THESE INDICES WITHE THE HELP OF THE FUNCTION GIVEN BELOW.
 
@@ -135,28 +112,48 @@ def get_2_interconnecting(E_prime_d, E_prime, flights_dataframe):
     2) THE SECOND AND THIRD TENSOR CONTAIN DEPARTURE AND ARRIVAL TIME OF FLIGHTS AT THEIR RESPECTIVE INDICES AND 0 WHERE NO SUCH FLIGHT EXISTS.(WE WILL USE THESE TENSORS AHEAD)
     """
 
-def encode_flights(dataframe,unique_airports,flight_numbers, departure_times):
+def encode_flights(dataframe, unique_airports, flight_numbers, departure_times):
 
     departure_airport_dict = {airport: idx for idx, airport in enumerate(unique_airports)}
-    arrival_airport_dict = {airport: idx for idx, airport in enumerate(unique_airports)}
-    flight_number_dict = {flight: idx for idx, flight in enumerate(flight_numbers)}
-    departure_time_dict = {pd.to_datetime(time): idx for idx, time in enumerate(departure_times)}
+    arrival_airport_dict   = {airport: idx for idx, airport in enumerate(unique_airports)}
+    flight_number_dict     = {flight:  idx for idx, flight   in enumerate(flight_numbers)}
+    departure_time_dict    = {pd.to_datetime(time): idx for idx, time   in enumerate(departure_times)}
 
-    flight_existence_array = np.zeros((len(unique_airports), len(unique_airports), len(flight_numbers), len(departure_times)), dtype=int)
-    departure_datetime_array = np.zeros_like(flight_existence_array, dtype=object)
-    arrival_datetime_array = np.zeros_like(flight_existence_array, dtype=object)
+    # existence mask stays the same
+    flight_existence_array = np.zeros(
+        (len(unique_airports),
+         len(unique_airports),
+         len(flight_numbers),
+         len(departure_times)),
+        dtype=int
+    )
+
+    # create empty object arrays and fill with None
+    shape = flight_existence_array.shape
+    departure_datetime_array = np.empty(shape, dtype=object)
+    arrival_datetime_array   = np.empty(shape, dtype=object)
+    departure_datetime_array[:] = None
+    arrival_datetime_array[:]   = None
 
     for _, row in dataframe.iterrows():
         i = departure_airport_dict[row["DepartureAirport"]]
         j = arrival_airport_dict[row["ArrivalAirport"]]
         k = flight_number_dict[row["FlightNumber"]]
-        departure_time = pd.to_datetime(row["DepartureDateTime"])
-        l = departure_time_dict[departure_time]
-        flight_existence_array[i, j, k, l] = 1
-        departure_datetime_array[i, j, k, l] = row["DepartureDateTime"]
-        arrival_datetime_array[i, j, k, l] = row["ArrivalDateTime"]
+        dt = pd.to_datetime(row["DepartureDateTime"])
+        l  = departure_time_dict[dt]
 
-    return flight_existence_array, departure_datetime_array, arrival_datetime_array,arrival_airport_dict,departure_airport_dict
+        flight_existence_array[i, j, k, l]   = 1
+        departure_datetime_array[i, j, k, l] = row["DepartureDateTime"]
+        arrival_datetime_array[i, j, k, l]   = row["ArrivalDateTime"]
+
+    return (
+        flight_existence_array,
+        departure_datetime_array,
+        arrival_datetime_array,
+        arrival_airport_dict,
+        departure_airport_dict,
+    )
+
 
 def decode(variable, unique_airports, flight_numbers, departure_time, df):
     sol = []
