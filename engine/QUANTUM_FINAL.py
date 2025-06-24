@@ -183,7 +183,7 @@ def decode(variable, unique_airports, flight_numbers, departure_time, df):
 
     return sol
 
-def main(*disruptions, INVENTORY_FILE=os.path.join(moduleDir, "Files", "inv.csv"), AIRPORT_FILE = os.path.join(moduleDir, 'GlobalAirportDatabase.csv'), PNR_FILE = os.path.join(moduleDir, "Files", "pnrb.csv"), PASSENGER_LIST = os.path.join(moduleDir, "Files", "pnrp.csv"), TOKEN = 'DEV-6ddf205adb6761bc0018a65f2496245457fe977f', method=METHOD):
+def main(*disruptions, INVENTORY_FILE=os.path.join(moduleDir, "Files", "inv.csv"), AIRPORT_FILE = os.path.join(moduleDir, 'GlobalAirportDatabase.csv'), PNR_FILE = os.path.join(moduleDir, "Files", "pnrb.csv"), PASSENGER_LIST = os.path.join(moduleDir, "Files", "pnrp.csv"), folder="Quantum", TOKEN = 'DEV-6ddf205adb6761bc0018a65f2496245457fe977f', method=METHOD):
     inventory_dataframe=pd.read_csv(INVENTORY_FILE)
 
     for disrupt in disruptions:
@@ -625,11 +625,11 @@ def main(*disruptions, INVENTORY_FILE=os.path.join(moduleDir, "Files", "inv.csv"
 
         src=cancelled_flight_departure_airport
         dest=cancelled_flight_arrival_airport
-        sampleset = reaccomodation(PNR, paths, scores, alpha, src, dest, Passengers_flight_ungrouped, disrupt, TOKEN, "Quantum", method=method)
+        sampleset = reaccomodation(PNR, paths, scores, alpha, src, dest, Passengers_flight_ungrouped, disrupt, TOKEN, folder, method=method)
 
         if sampleset is not None and sampleset.first.energy<0:
-            df1 = pd.read_csv(os.path.join(moduleDir, "Solutions", "Quantum", f"Default_solution_{disrupt}.csv"))
-            df2 = pd.read_csv(os.path.join(moduleDir, "Solutions", "Quantum", f"Exception_list_{disrupt}.csv"))
+            df1 = pd.read_csv(os.path.join(moduleDir, "Solutions", folder, f"Default_solution_{disrupt}.csv"))
+            df2 = pd.read_csv(os.path.join(moduleDir, "Solutions", folder, f"Exception_list_{disrupt}.csv"))
 
             for i in range(len(df1)):
                 flight_id = df1["Flight ID"][i]
@@ -678,16 +678,17 @@ if __name__ == '__main__':
         'Percentage_Exception_NonNull', 'Percentage_Exception_Null',
         'Percentage_Solved', 'Time_Taken'
     ])
-    results_path = os.path.join(moduleDir, "Simulation_Results_Quantum.csv")
+    folder = "Quantum2"
+    results_path = os.path.join(moduleDir, f"Simulation_Results_{folder}.csv")
     for i, disruption in enumerate(inventory_ids):
         try:
             start = time.time()
-            main(disruption, TOKEN='DEV-12b7e5b3bee7351638023f6bf954329397740cbe')
+            main(disruption, folder=folder, TOKEN='DEV-12b7e5b3bee7351638023f6bf954329397740cbe')
             end = time.time()
             print(f"Time taken for simulation {i+1}: {end - start:.2f} seconds")
 
-            solution_path = os.path.join(moduleDir, "Solutions", "Quantum", f"Default_solution_{disruption}.csv")
-            exception_path = os.path.join(moduleDir, "Solutions", "Quantum", f"Exception_list_{disruption}.csv")
+            solution_path = os.path.join(moduleDir, "Solutions", folder, f"Default_solution_{disruption}.csv")
+            exception_path = os.path.join(moduleDir, "Solutions", folder, f"Exception_list_{disruption}.csv")
             
             default_solutions = pd.read_csv(solution_path)        
             exception_pnrs = pd.read_csv(exception_path)
@@ -734,4 +735,4 @@ if __name__ == '__main__':
             print(f"An error occurred during simulation {i+1}: {e}")
             continue
 
-    print("Simulation results saved to 'Simulation_Results_Quantum.csv'.")
+    print(f"Simulation results saved to 'Simulation_Results_{folder}.csv'.")

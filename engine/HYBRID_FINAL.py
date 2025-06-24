@@ -39,7 +39,7 @@ def check_time_diff(flight_network, disrupted_flights):
         
     return final
      
-def main(*disruptions_all, INVENTORY_FILE=os.path.join(moduleDir, "Files", "inv.csv"), PNR_FILE = os.path.join(moduleDir, "Files", "pnrb.csv"), PASSENGER_LIST = os.path.join(moduleDir, "Files", "pnrp.csv"), TOKEN = 'DEV-6ddf205adb6761bc0018a65f2496245457fe977f'):
+def main(*disruptions_all, INVENTORY_FILE=os.path.join(moduleDir, "Files", "inv.csv"), PNR_FILE = os.path.join(moduleDir, "Files", "pnrb.csv"), PASSENGER_LIST = os.path.join(moduleDir, "Files", "pnrp.csv"), folder="Hybrid", TOKEN = 'DEV-6ddf205adb6761bc0018a65f2496245457fe977f'):
     flight_network = pd.read_csv(INVENTORY_FILE)
     PNR_list = pd.read_csv(PNR_FILE)
     passenger_details = pd.read_csv(PASSENGER_LIST)
@@ -76,11 +76,11 @@ def main(*disruptions_all, INVENTORY_FILE=os.path.join(moduleDir, "Files", "inv.
                 for j in range(len(paths[i])):
                     paths[i][j] = Flight(flight_network[flight_network["InventoryId"]==paths[i][j]][['FC_AvailableInventory', 'BC_AvailableInventory', 'PC_AvailableInventory', 'EC_AvailableInventory']], paths[i][j], flight_network[flight_network["InventoryId"]==paths[i][j]]['DepartureAirport'].iloc[0], flight_network[flight_network["InventoryId"]==paths[i][j]]['ArrivalAirport'].iloc[0])
             
-            sampleset =  reaccomodation(PNR, paths, scores, alpha, sources[disrupt], destinations[disrupt], impacted_pax[disrupt], disrupt, TOKEN, "Hybrid", method=METHOD)
+            sampleset =  reaccomodation(PNR, paths, scores, alpha, sources[disrupt], destinations[disrupt], impacted_pax[disrupt], disrupt, TOKEN, folder, method=METHOD)
         
             if sampleset is not None and sampleset.first.energy<0:
-                default_path = os.path.join(moduleDir, "Solutions", "Hybrid", f"Default_solution_{disrupt}.csv")
-                except_path = os.path.join(moduleDir, "Solutions", "Hybrid", f"Exception_list_{disrupt}.csv")
+                default_path = os.path.join(moduleDir, "Solutions", folder, f"Default_solution_{disrupt}.csv")
+                except_path = os.path.join(moduleDir, "Solutions", folder, f"Exception_list_{disrupt}.csv")
                 defaults.append(default_path)
                 exceptions.append(except_path)
                 df1 = pd.read_csv(default_path)
@@ -135,16 +135,17 @@ if __name__ == '__main__':
         'Percentage_Exception_NonNull', 'Percentage_Exception_Null',
         'Percentage_Solved', 'Time_Taken'
     ])
-    results_path = os.path.join(moduleDir, "Simulation_Results_Hybrid.csv")
-    for i, disruption in enumerate(inventory_ids[850:]):
+    folder = "Hybrid2"
+    results_path = os.path.join(moduleDir, f"Simulation_Results_{folder}.csv")
+    for i, disruption in enumerate(inventory_ids):
         try:
             start = time.time()
-            main(disruption, TOKEN='DEV-12b7e5b3bee7351638023f6bf954329397740cbe')
+            main(disruption, folder=folder, TOKEN='DEV-12b7e5b3bee7351638023f6bf954329397740cbe')
             end = time.time()
             print(f"Time taken for simulation {i+1}: {end - start:.2f} seconds")
 
-            solution_path = os.path.join(moduleDir, "Solutions", "Hybrid", f"Default_solution_{disruption}.csv")
-            exception_path = os.path.join(moduleDir, "Solutions", "Hybrid", f"Exception_list_{disruption}.csv")
+            solution_path = os.path.join(moduleDir, "Solutions", folder, f"Default_solution_{disruption}.csv")
+            exception_path = os.path.join(moduleDir, "Solutions", folder, f"Exception_list_{disruption}.csv")
             
             default_solutions = pd.read_csv(solution_path)        
             exception_pnrs = pd.read_csv(exception_path)
@@ -191,4 +192,4 @@ if __name__ == '__main__':
             print(f"An error occurred during simulation {i+1}: {e}")
             continue
 
-    print("Simulation results saved to 'Simulation_Results_Hybrid.csv'.")
+    print(f"Simulation results saved to 'Simulation_Results_{folder}.csv'.")
