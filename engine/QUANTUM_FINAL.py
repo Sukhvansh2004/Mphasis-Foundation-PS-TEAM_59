@@ -486,7 +486,7 @@ def main(*disruptions, INVENTORY_FILE=os.path.join(moduleDir, "Files", "inv.csv"
         objective_bqm = BinaryQuadraticModel(obj_linear, obj_quadratic, mod.objective.constant, vartype=BINARY)
 
         #Initialize the Constrained Quadratic Model
-        cqm = ConstrainedQuadraticModel.from_bqm(objective_bqm)
+        cqm = ConstrainedQuadraticModel().from_bqm(objective_bqm)
 
         # Transfer the linear constraints
         for constraint in mod.linear_constraints:
@@ -542,13 +542,21 @@ def main(*disruptions, INVENTORY_FILE=os.path.join(moduleDir, "Files", "inv.csv"
                 unique_solutions = {}
                 for sample, energy, num_occurrences in result.data(['sample', 'energy', 'num_occurrences']):
                     # 1) Keep only the real variables
-                    real_sample = {k: v for k, v in sample.items() 
-                                if not str(k).startswith('slack_')}
+                    real_sample = {
+                        k: v
+                        for k, v in sample.items()
+                        if not (isinstance(k, str) and k.startswith('slack_'))
+                    }
 
-                    # 2) Build a hashable representation of exactly those 4 variables
-                    sample_repr = tuple(sorted(real_sample.items()))
+                    # 2) Build a hashable repr by sorting on the string of the key
+                    sample_repr = tuple(
+                        sorted(
+                            real_sample.items(),
+                            key=lambda kv: str(kv[0])
+                        )
+                    )
 
-                    # 3) Store only unique reps
+                    # 3) Deduplicate
                     if sample_repr not in unique_solutions:
                         unique_solutions[sample_repr] = (energy, num_occurrences)
                         
@@ -575,13 +583,24 @@ def main(*disruptions, INVENTORY_FILE=os.path.join(moduleDir, "Files", "inv.csv"
 
 
         flight_solution = []
-
         for i, (config_tuple, (energy, num_occurrences)) in enumerate(sorted_unique_solutions[:num_top_solutions]):
             selected_tuples = []
-            for element in config_tuple:
-                if element[1] == 1.0:
-                    indices = tuple(map(int, element[0][2:-1].split(',')))
-                    selected_tuples.append(indices)
+            for key, val in config_tuple:  # unpack the (key, value) pairs
+                if val != 1.0:
+                    continue
+                # key might already be a tuple, or a string repr of a tuple
+                if isinstance(key, tuple):
+                    indices = key
+                else:
+                    try:
+                        indices = ast.literal_eval(key)
+                        if not isinstance(indices, tuple):
+                            # skip any weird non‐tuple keys
+                            continue
+                    except (ValueError, SyntaxError):
+                        continue
+                selected_tuples.append(indices)
+
             solution = decode(selected_tuples, unique_airports, flight_no, departure_time, reduced_data)
             flight_solution.append(solution)
 
@@ -651,78 +670,78 @@ def main(*disruptions, INVENTORY_FILE=os.path.join(moduleDir, "Files", "inv.csv"
                 else:
                     inventory_dataframe.loc[inventory_id_condition, "EC_AvailableInventory"] -= PNRs['PAX_CNT'].loc[PNR_ID]
 
-# if __name__ == '__main__':
-#     main("INV-ZZ-1409214", TOKEN='DEV-12b7e5b3bee7351638023f6bf954329397740cbe')
-
 if __name__ == '__main__':
-    import random
-    import time
-    INVENTORY_FILE = os.path.join(moduleDir, "Files", "inv.csv")
-    flight_network = pd.read_csv(INVENTORY_FILE)
-    inventory_ids = flight_network['InventoryId'].tolist()
+    main("INV-ZZ-1409214", TOKEN='DEV-12b7e5b3bee7351638023f6bf954329397740cbe')
+
+# if __name__ == '__main__':
+#     import random
+#     import time
+#     INVENTORY_FILE = os.path.join(moduleDir, "Files", "inv.csv")
+#     flight_network = pd.read_csv(INVENTORY_FILE)
+#     inventory_ids = flight_network['InventoryId'].tolist()
     
-    num_sims = 150
-    results_df = pd.DataFrame(columns=[
-        'Simulation', 'Disruption', 'Num_Default_PNRs',
-        'Num_Exception_NonNull_PNRs', 'Num_Exception_Null_PNRs',
-        'Total_PNRs', 'Percentage_Default',
-        'Percentage_Exception_NonNull', 'Percentage_Exception_Null',
-        'Percentage_Solved', 'Time_Taken'
-    ])
-    results_path = os.path.join(moduleDir, "Simulation_Results_Quantum.csv")
-    for i, disruption in enumerate(inventory_ids):
-        try:
-            start = time.time()
-            main(disruption, TOKEN='DEV-12b7e5b3bee7351638023f6bf954329397740cbe')
-            end = time.time()
-            print(f"Time taken for simulation {i+1}: {end - start:.2f} seconds")
+#     num_sims = 150
+#     results_df = pd.DataFrame(columns=[
+#         'Simulation', 'Disruption', 'Num_Default_PNRs',
+#         'Num_Exception_NonNull_PNRs', 'Num_Exception_Null_PNRs',
+#         'Total_PNRs', 'Percentage_Default',
+#         'Percentage_Exception_NonNull', 'Percentage_Exception_Null',
+#         'Percentage_Solved', 'Time_Taken'
+#     ])
+#     results_path = os.path.join(moduleDir, "Simulation_Results_Quantum.csv")
+#     for i, disruption in enumerate(inventory_ids):
+#         try:
+#             start = time.time()
+#             main(disruption, TOKEN='DEV-12b7e5b3bee7351638023f6bf954329397740cbe')
+#             end = time.time()
+#             print(f"Time taken for simulation {i+1}: {end - start:.2f} seconds")
 
-            solution_path = os.path.join(moduleDir, "Solutions", "Quantum", f"Default_solution_{disruption}.csv")
-            exception_path = os.path.join(moduleDir, "Solutions", "Quantum", f"Exception_list_{disruption}.csv")
+#             solution_path = os.path.join(moduleDir, "Solutions", "Quantum", f"Default_solution_{disruption}.csv")
+#             exception_path = os.path.join(moduleDir, "Solutions", "Quantum", f"Exception_list_{disruption}.csv")
             
-            default_solutions = pd.read_csv(solution_path)        
-            exception_pnrs = pd.read_csv(exception_path)
+#             default_solutions = pd.read_csv(solution_path)        
+#             exception_pnrs = pd.read_csv(exception_path)
             
-            num_default_pnrs = default_solutions['PNR ID'].nunique()
-            num_exception_pnrs = exception_pnrs[exception_pnrs['Path'].notnull()]['PNR ID'].nunique()
-            num_null_exception_pnrs = exception_pnrs[exception_pnrs['Path'].isnull()]['PNR ID'].nunique()
-            total_pnrs = num_default_pnrs + num_exception_pnrs + num_null_exception_pnrs
-            percentage_default = (num_default_pnrs / total_pnrs) * 100 if total_pnrs > 0 else 0
-            percentage_exception = (num_exception_pnrs / total_pnrs) * 100 if total_pnrs > 0 else 0
-            percentage_null_exception = (num_null_exception_pnrs / total_pnrs) * 100 if total_pnrs > 0 else 0
-            percentage_solved = (num_default_pnrs + num_exception_pnrs) / total_pnrs * 100 if total_pnrs > 0 else 0
+#             num_default_pnrs = default_solutions['PNR ID'].nunique()
+#             num_exception_pnrs = exception_pnrs[exception_pnrs['Path'].notnull()]['PNR ID'].nunique()
+#             num_null_exception_pnrs = exception_pnrs[exception_pnrs['Path'].isnull()]['PNR ID'].nunique()
+#             total_pnrs = num_default_pnrs + num_exception_pnrs + num_null_exception_pnrs
+#             percentage_default = (num_default_pnrs / total_pnrs) * 100 if total_pnrs > 0 else 0
+#             percentage_exception = (num_exception_pnrs / total_pnrs) * 100 if total_pnrs > 0 else 0
+#             percentage_null_exception = (num_null_exception_pnrs / total_pnrs) * 100 if total_pnrs > 0 else 0
+#             percentage_solved = (num_default_pnrs + num_exception_pnrs) / total_pnrs * 100 if total_pnrs > 0 else 0
 
-            new_row = pd.DataFrame([{
-                'Simulation': i + 1,
-                'Disruption': disruption,
-                'Num_Default_PNRs': num_default_pnrs,
-                'Num_Exception_NonNull_PNRs': num_exception_pnrs,
-                'Num_Exception_Null_PNRs': num_null_exception_pnrs,
-                'Total_PNRs': total_pnrs,
-                'Percentage_Default': percentage_default,
-                'Percentage_Exception_NonNull': percentage_exception,
-                'Percentage_Exception_Null': percentage_null_exception,
-                'Percentage_Solved': percentage_solved,
-                "Time_Taken": end - start
-            }])
-            results_df = pd.concat([results_df, new_row], ignore_index=True)
-            # Save after each simulation
-            results_df.to_csv(results_path, index=False)
+#             new_row = pd.DataFrame([{
+#                 'Simulation': i + 1,
+#                 'Disruption': disruption,
+#                 'Num_Default_PNRs': num_default_pnrs,
+#                 'Num_Exception_NonNull_PNRs': num_exception_pnrs,
+#                 'Num_Exception_Null_PNRs': num_null_exception_pnrs,
+#                 'Total_PNRs': total_pnrs,
+#                 'Percentage_Default': percentage_default,
+#                 'Percentage_Exception_NonNull': percentage_exception,
+#                 'Percentage_Exception_Null': percentage_null_exception,
+#                 'Percentage_Solved': percentage_solved,
+#                 "Time_Taken": end - start
+#             }])
+#             results_df = pd.concat([results_df, new_row], ignore_index=True)
+#             # Save after each simulation
+#             results_df.to_csv(results_path, index=False)
 
-            print(f"Simulation {i+1}:")
-            print(f"  Disruption: {disruption}")
-            print(f"  Number of PNRs in Default Solution: {num_default_pnrs}")
-            print(f"  Number of PNRs in Exception List with Non Null Path: {num_exception_pnrs}")
-            print(f"  Number of PNRs in Exception List with Null Path: {num_null_exception_pnrs}")
-            print(f"  Total PNRs: {total_pnrs}")
-            print(f"  Percentage of PNRs assigned to Default Solution: {percentage_default:.2f}%")
-            print(f"  Percentage of PNRs assigned to Exception List with Non Null Path: {percentage_exception:.2f}%")
-            print(f"  Percentage of PNRs assigned to Exception List with Null Path: {percentage_null_exception:.2f}%")
-            print(f"  Percentage of PNRs solved (Default + Exception): {percentage_solved:.2f}%")
-            print(f"  Time taken: {end - start:.2f} seconds")
-            print("-" * 40)
-        except Exception as e:
-            print(f"An error occurred during simulation {i+1}: {e}")
-            continue
+#             print(f"Simulation {i+1}:")
+#             print(f"  Disruption: {disruption}")
+#             print(f"  Number of PNRs in Default Solution: {num_default_pnrs}")
+#             print(f"  Number of PNRs in Exception List with Non Null Path: {num_exception_pnrs}")
+#             print(f"  Number of PNRs in Exception List with Null Path: {num_null_exception_pnrs}")
+#             print(f"  Total PNRs: {total_pnrs}")
+#             print(f"  Percentage of PNRs assigned to Default Solution: {percentage_default:.2f}%")
+#             print(f"  Percentage of PNRs assigned to Exception List with Non Null Path: {percentage_exception:.2f}%")
+#             print(f"  Percentage of PNRs assigned to Exception List with Null Path: {percentage_null_exception:.2f}%")
+#             print(f"  Percentage of PNRs solved (Default + Exception): {percentage_solved:.2f}%")
+#             print(f"  Time taken: {end - start:.2f} seconds")
+#             print("-" * 40)
+#         except Exception as e:
+#             print(f"An error occurred during simulation {i+1}: {e}")
+#             continue
 
-    print("Simulation results saved to 'Simulation_Results_Quantum.csv'.")
+#     print("Simulation results saved to 'Simulation_Results_Quantum.csv'.")

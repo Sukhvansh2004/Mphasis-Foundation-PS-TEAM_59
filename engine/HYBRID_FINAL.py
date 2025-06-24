@@ -127,7 +127,6 @@ if __name__ == '__main__':
     flight_network = pd.read_csv(INVENTORY_FILE)
     inventory_ids = flight_network['InventoryId'].tolist()
     
-    num_sims = 150
     results_df = pd.DataFrame(columns=[
         'Simulation', 'Disruption', 'Num_Default_PNRs',
         'Num_Exception_NonNull_PNRs', 'Num_Exception_Null_PNRs',
@@ -136,7 +135,7 @@ if __name__ == '__main__':
         'Percentage_Solved', 'Time_Taken'
     ])
     results_path = os.path.join(moduleDir, "Simulation_Results_Hybrid.csv")
-    for i, disruption in enumerate(inventory_ids):
+    for i, disruption in enumerate(inventory_ids[693:]):
         try:
             start = time.time()
             main(disruption, TOKEN='DEV-12b7e5b3bee7351638023f6bf954329397740cbe')
