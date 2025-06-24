@@ -478,7 +478,7 @@ def main(*disruptions, INVENTORY_FILE=os.path.join(moduleDir, "Files", "inv.csv"
         
         """NOW WE DEFINE A CONSTRAINT QUADRATIC MODEL AND USE D-WAVE'S HYBRID SOLVER TO SAMPLE SOLUTIONS."""
 
-        
+        cqm = ConstrainedQuadraticModel()
 
         # Transfer the objective function
         obj_linear = mod.objective.linear.to_dict()
@@ -486,7 +486,7 @@ def main(*disruptions, INVENTORY_FILE=os.path.join(moduleDir, "Files", "inv.csv"
         objective_bqm = BinaryQuadraticModel(obj_linear, obj_quadratic, mod.objective.constant, vartype=BINARY)
 
         #Initialize the Constrained Quadratic Model
-        cqm = ConstrainedQuadraticModel().from_bqm(objective_bqm)
+        cqm.set_objective(objective_bqm)
 
         # Transfer the linear constraints
         for constraint in mod.linear_constraints:
@@ -671,7 +671,7 @@ def main(*disruptions, INVENTORY_FILE=os.path.join(moduleDir, "Files", "inv.csv"
                     inventory_dataframe.loc[inventory_id_condition, "EC_AvailableInventory"] -= PNRs['PAX_CNT'].loc[PNR_ID]
 
 if __name__ == '__main__':
-    main("INV-ZZ-1409214", TOKEN='DEV-12b7e5b3bee7351638023f6bf954329397740cbe')
+    main("INV-ZZ-3608940", TOKEN='DEV-12b7e5b3bee7351638023f6bf954329397740cbe')
 
 # if __name__ == '__main__':
 #     import random
