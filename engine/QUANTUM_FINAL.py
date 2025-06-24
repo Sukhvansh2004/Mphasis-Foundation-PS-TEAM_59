@@ -549,21 +549,13 @@ def main(*disruptions, INVENTORY_FILE=os.path.join(moduleDir, "Files", "inv.csv"
                 unique_solutions = {}
                 for sample, energy, num_occurrences in result.data(['sample', 'energy', 'num_occurrences']):
                     # 1) Keep only the real variables
-                    real_sample = {
-                        k: v
-                        for k, v in sample.items()
-                        if not (isinstance(k, str) and k.startswith('slack_'))
-                    }
+                    real_sample = {str(k): v for k, v in sample.items() 
+                                if not str(k).startswith('slack_')}
 
-                    # 2) Build a hashable repr by sorting on the string of the key
-                    sample_repr = tuple(
-                        sorted(
-                            real_sample.items(),
-                            key=lambda kv: str(kv[0])
-                        )
-                    )
+                    # 2) Build a hashable representation of exactly those 4 variables
+                    sample_repr = tuple(sorted(real_sample.items()))
 
-                    # 3) Deduplicate
+                    # 3) Store only unique reps
                     if sample_repr not in unique_solutions:
                         unique_solutions[sample_repr] = (energy, num_occurrences)
                         
@@ -592,26 +584,18 @@ def main(*disruptions, INVENTORY_FILE=os.path.join(moduleDir, "Files", "inv.csv"
         flight_solution = []
         for i, (config_tuple, (energy, num_occurrences)) in enumerate(sorted_unique_solutions[:num_top_solutions]):
             selected_tuples = []
-            for key, val in config_tuple:  # unpack the (key, value) pairs
-                if val != 1.0:
-                    continue
-                # key might already be a tuple, or a string repr of a tuple
-                if isinstance(key, tuple):
-                    indices = key
-                else:
+            for element in config_tuple:
+                if element[1] == 1.0:
                     try:
-                        indices = ast.literal_eval(key)
-                        if not isinstance(indices, tuple):
-                            # skip any weird non‐tuple keys
-                            continue
-                    except (ValueError, SyntaxError):
-                        continue
-                selected_tuples.append(indices)
+                        indices = tuple(map(int, element[0][2:-1].split(',')))
+                        selected_tuples.append(indices)
+                    except:
+                        pass
 
             solution = decode(selected_tuples, unique_airports, flight_no, departure_time, reduced_data)
             flight_solution.append(solution)
 
-        print(flight_solution)
+        print('\n',flight_solution)
 
         scorer = PathScoring(scoring_criteria_Flights_toggle, scoring_criteria_Flights)
         paths=flight_solution
@@ -678,7 +662,7 @@ def main(*disruptions, INVENTORY_FILE=os.path.join(moduleDir, "Files", "inv.csv"
                     inventory_dataframe.loc[inventory_id_condition, "EC_AvailableInventory"] -= PNRs['PAX_CNT'].loc[PNR_ID]
 
 if __name__ == '__main__':
-    main("INV-ZZ-3608940", TOKEN='DEV-12b7e5b3bee7351638023f6bf954329397740cbe')
+    main("INV-ZZ-3164285", TOKEN='DEV-12b7e5b3bee7351638023f6bf954329397740cbe')
 
 # if __name__ == '__main__':
 #     import random
