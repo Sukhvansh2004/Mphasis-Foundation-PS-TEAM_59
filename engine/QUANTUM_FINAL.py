@@ -361,9 +361,9 @@ def main(*disruptions, INVENTORY_FILE=os.path.join(moduleDir, "Files", "inv.csv"
         end_node = np.argwhere(unique_airports== cancelled_flight_arrival_airport).flatten()[0]
         st=cancelled_flight["DepartureDateTime"]
         et=cancelled_flight["ArrivalDateTime"]
-        n = 3
+        n_ = 3
         r = 0.2
-        m=2
+        m_ =2
 
         # print(start_node)
         # print(end_node)
@@ -420,13 +420,15 @@ def main(*disruptions, INVENTORY_FILE=os.path.join(moduleDir, "Files", "inv.csv"
                                 for j in range(arriv_no)
                                 for k in range(flght_no)
                                 for l in range(time_no) if flight_exist[i, j, k, l]==1)
-            mdl.minimize(start_time_constraint)
+            
             end_time_constraint = mdl.sum(etcm*variables[i, j, k, l] * ((arrival_time_tensor[i, j, k, l] - et).total_seconds() / 3600)
                                 for i in range(arriv_no)
                                 for j in arrival_airports_encoded_indices
                                 for k in range(flght_no)
                                 for l in range(time_no) if flight_exist[i, j, k, l]==1)
-            mdl.minimize(end_time_constraint)
+            
+            mdl.minimize(start_time_constraint + end_time_constraint)
+
             if((len(flight2)+len(flight3))>0):
                 for j in range(arriv_no):
                     if j not in departure_airports_encoded_indices and j not in arrival_airports_encoded_indices:
@@ -467,25 +469,27 @@ def main(*disruptions, INVENTORY_FILE=os.path.join(moduleDir, "Files", "inv.csv"
                                     for j in range(arriv_no)
                                     for k in range(flght_no)
                                     for l in range(time_no) if flight_exist[i,j,k,l]==1)
-            mdl.add_constraint(total_flight <= n*math.sqrt(tfm), 'total_flight_constraint')
+            mdl.add_constraint(total_flight <= n_ * math.sqrt(tfm), 'total_flight_constraint')
         else:
             print("No Alternate Flight Available")
 
         if(total_flight_after_reduction>0):
             mod = from_docplex_mp(mdl)
             # print(mod.prettyprint())
-
+        else:
+            raise AssertionError("No Alternate Flight Available")
+        
         """NOW WE DEFINE A CONSTRAINT QUADRATIC MODEL AND USE D-WAVE'S HYBRID SOLVER TO SAMPLE SOLUTIONS."""
 
         
-        # Initialize a new Constrained Quadratic Model
-        cqm = ConstrainedQuadraticModel()
 
         # Transfer the objective function
         obj_linear = mod.objective.linear.to_dict()
         obj_quadratic = mod.objective.quadratic.to_dict()
         objective_bqm = BinaryQuadraticModel(obj_linear, obj_quadratic, mod.objective.constant, vartype=BINARY)
-        cqm.from_bqm(objective_bqm)
+
+        #Initialize the Constrained Quadratic Model
+        cqm = ConstrainedQuadraticModel.from_bqm(objective_bqm)
 
         # Transfer the linear constraints
         for constraint in mod.linear_constraints:
@@ -623,13 +627,14 @@ def main(*disruptions, INVENTORY_FILE=os.path.join(moduleDir, "Files", "inv.csv"
             for i in range(len(df1)):
                 flight_id = df1["Flight ID"][i]
                 PNR_ID = df1["PNR ID"][i]
+                passenger_class = df1["Class"][i]
                 inventory_id_condition = inventory_dataframe["InventoryId"] == flight_id
 
-                if flight_id == 'BC':
+                if passenger_class == 'BC':
                     inventory_dataframe.loc[inventory_id_condition, "BC_AvailableInventory"] -= PNRs['PAX_CNT'].loc[PNR_ID]
-                elif flight_id == 'FC':
+                elif passenger_class == 'FC':
                     inventory_dataframe.loc[inventory_id_condition, "FC_AvailableInventory"] -= PNRs['PAX_CNT'].loc[PNR_ID]
-                elif flight_id == 'PC':
+                elif passenger_class == 'PC':
                     inventory_dataframe.loc[inventory_id_condition, "PC_AvailableInventory"] -= PNRs['PAX_CNT'].loc[PNR_ID]
                 else:
                     inventory_dataframe.loc[inventory_id_condition, "EC_AvailableInventory"] -= PNRs['PAX_CNT'].loc[PNR_ID]
@@ -637,13 +642,14 @@ def main(*disruptions, INVENTORY_FILE=os.path.join(moduleDir, "Files", "inv.csv"
             for i in range(len(df2)):
                 flight_id = df2["Flight ID"][i]  
                 PNR_ID = df2["PNR ID"][i]
+                passenger_class = df2["Class"][i]
                 inventory_id_condition = inventory_dataframe["InventoryId"] == flight_id
 
-                if flight_id == 'BC':
+                if passenger_class == 'BC':
                     inventory_dataframe.loc[inventory_id_condition, "BC_AvailableInventory"] -= PNRs['PAX_CNT'].loc[PNR_ID]
-                elif flight_id == 'FC':
+                elif passenger_class == 'FC':
                     inventory_dataframe.loc[inventory_id_condition, "FC_AvailableInventory"] -= PNRs['PAX_CNT'].loc[PNR_ID]
-                elif flight_id == 'PC':
+                elif passenger_class == 'PC':
                     inventory_dataframe.loc[inventory_id_condition, "PC_AvailableInventory"] -= PNRs['PAX_CNT'].loc[PNR_ID]
                 else:
                     inventory_dataframe.loc[inventory_id_condition, "EC_AvailableInventory"] -= PNRs['PAX_CNT'].loc[PNR_ID]
