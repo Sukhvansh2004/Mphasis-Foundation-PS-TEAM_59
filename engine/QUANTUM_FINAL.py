@@ -2,7 +2,7 @@ from pnr_reaccomodation import *
 from dimod import BINARY
 from docplex.mp.model import Model
 from dimod.constrained import cqm_to_bqm
-from neal import SimulatedAnnealingSampler
+from dimod import SimulatedAnnealingSampler
 from qiskit_optimization.translators import from_docplex_mp
 import numpy as np
 import math
@@ -662,7 +662,7 @@ def main(*disruptions, INVENTORY_FILE=os.path.join(moduleDir, "Files", "inv.csv"
                     inventory_dataframe.loc[inventory_id_condition, "EC_AvailableInventory"] -= PNRs['PAX_CNT'].loc[PNR_ID]
 
 if __name__ == '__main__':
-    main("INV-ZZ-3164285", TOKEN='DEV-12b7e5b3bee7351638023f6bf954329397740cbe')
+    main("INV-ZZ-3217115", TOKEN='DEV-12b7e5b3bee7351638023f6bf954329397740cbe')
 
 # if __name__ == '__main__':
 #     import random
